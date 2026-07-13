@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Endpoint Behavioral Analysis Simulation - Process & Persistence</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --panel:#0f1a2e;
+      --panel2:#0c1528;
+      --text:#e6edf6;
+      --muted:#a9b7d0;
+      --border:#223254;
+      --accent:#7aa2ff;
+      --good:#22c55e;
+      --bad:#ef4444;
+      --warn:#f59e0b;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background:radial-gradient(1200px 800px at 20% 10%, rgba(122,162,255,.18), transparent 60%),
+                 radial-gradient(900px 700px at 85% 20%, rgba(34,197,94,.10), transparent 60%),
+                 var(--bg);
+      color:var(--text);
+    }
+    header{
+      padding:22px 18px 10px;
+      max-width:1200px;
+      margin:0 auto;
+    }
+    .title{
+      display:flex; gap:14px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap;
+    }
+    h1{
+      margin:0;
+      font-size:20px;
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      margin:8px 0 0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.35;
+      max-width:920px;
+    }
+    .badgeRow{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+    }
+    .chip{
+      padding:7px 10px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.04);
+      border-radius:999px;
+      color:var(--muted);
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .chip strong{ color:var(--text); font-weight:700; }
+    main{
+      max-width:1200px;
+      margin:0 auto;
+      padding:10px 18px 40px;
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap:14px;
+    }
+    @media (max-width: 980px){
+      main{ grid-template-columns:1fr; }
+    }
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .cardHeader{
+      padding:14px 14px 12px;
+      border-bottom:1px solid var(--border);
+      background:linear-gradient(180deg, rgba(122,162,255,.08), transparent);
+      display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap;
+    }
+    .cardHeader h2{
+      margin:0;
+      font-size:14px;
+      letter-spacing:.2px;
+    }
+    .cardHeader p{
+      margin:6px 0 0;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.35;
+    }
+    .cardBody{ padding:14px; }
+    .row{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+    }
+    .btn{
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:650;
+      font-size:13px;
+      transition:transform .05s ease, background .15s ease;
+      user-select:none;
+    }
+    .btn:hover{ background:rgba(255,255,255,.07); }
+    .btn:active{ transform:translateY(1px); }
+    .btn.primary{
+      border-color:rgba(122,162,255,.45);
+      background:rgba(122,162,255,.15);
+    }
+    .btn.primary:hover{ background:rgba(122,162,255,.22); }
+    .toggle{
+      display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+      color:var(--muted); font-size:12px;
+    }
+    .toggle input{ transform:translateY(1px); }
+    .alert{
+      padding:12px 12px;
+      border-radius:12px;
+      border:1px solid rgba(245,158,11,.35);
+      background:rgba(245,158,11,.09);
+      color:#ffe7b3;
+      font-size:12.5px;
+      line-height:1.35;
+    }
+    .grid2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 980px){
+      .grid2{ grid-template-columns:1fr; }
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      overflow:hidden;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:rgba(5,10,20,.35);
+    }
+    th, td{
+      padding:10px 10px;
+      border-bottom:1px solid rgba(34,50,84,.75);
+      font-size:12px;
+      vertical-align:top;
+    }
+    th{
+      text-align:left;
+      color:#d7e2f6;
+      background:rgba(122,162,255,.10);
+      font-weight:750;
+      letter-spacing:.2px;
+    }
+    tr:last-child td{ border-bottom:none; }
+    .mono{ font-family:var(--mono); font-size:11.5px; }
+    .muted{ color:var(--muted); }
+    .kvs{
+      display:grid;
+      grid-template-columns: 160px 1fr;
+      gap:8px 12px;
+      font-size:12px;
+      line-height:1.35;
+    }
+    @media (max-width: 520px){
+      .kvs{ grid-template-columns:1fr; }
+    }
+    .kvk{ color:var(--muted); }
+    .divider{ height:1px; background:var(--border); margin:14px 0; }
+    .q{
+      padding:12px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:rgba(15,26,46,.55);
+      margin-bottom:12px;
+    }
+    .q h3{
+      margin:0 0 8px;
+      font-size:13px;
+    }
+    .q p{
+      margin:0 0 10px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.35;
+    }
+    select, input[type="text"]{
+      width:100%;
+      padding:10px 10px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.18);
+      color:var(--text);
+      outline:none;
+      font-size:13px;
+    }
+    select:focus, input[type="text"]:focus{
+      border-color:rgba(122,162,255,.55);
+      box-shadow:0 0 0 3px rgba(122,162,255,.14);
+    }
+    .radioRow{
+      display:grid;
+      gap:8px;
+      margin-top:8px;
+    }
+    .radio{
+      display:flex; gap:10px; align-items:flex-start;
+      padding:10px 10px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:rgba(0,0,0,.12);
+      cursor:pointer;
+    }
+    .radio:hover{ background:rgba(255,255,255,.05); }
+    .radio input{ margin-top:2px; }
+    .radio .rt{ font-size:12.5px; }
+    .radio .rd{ color:var(--muted); font-size:12px; margin-top:2px; line-height:1.35;}
+    .scoreBox{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+      padding:12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.16);
+    }
+    .scoreBig{
+      font-size:18px;
+      font-weight:850;
+      letter-spacing:.2px;
+    }
+    .pill{
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.04);
+      font-size:12px;
+      color:var(--muted);
+    }
+    .feedback{
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.14);
+      padding:12px;
+      line-height:1.45;
+      font-size:12.5px;
+    }
+    .fbGood{ border-color:rgba(34,197,94,.40); background:rgba(34,197,94,.10); }
+    .fbBad{ border-color:rgba(239,68,68,.40); background:rgba(239,68,68,.08); }
+    .fbWarn{ border-color:rgba(245,158,11,.45); background:rgba(245,158,11,.10); }
+    .fbTitle{
+      font-weight:850;
+      margin-bottom:8px;
+    }
+    .smallNote{
+      margin-top:10px;
+      color:var(--muted);
+      font-size:11.5px;
+      line-height:1.35;
+    }
+    .foot{
+      margin-top:14px;
+      color:var(--muted);
+      font-size:11.5px;
+      line-height:1.35;
+    }
+    .hidden{ display:none !important; }
+    .rightColSticky{
+      position:sticky;
+      top:10px;
+    }
+    @media (max-width: 980px){
+      .rightColSticky{ position:static; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title">
+      <div>
+        <h1>Endpoint Suspicious Process &amp; Persistence Analysis</h1>
+        <p class="subtitle">
+          Analyst training simulation using synthetic, randomized endpoint artifacts. Your goal is to make evidence-based decisions
+          using process lineage, execution context, and (when present) persistence indicators. This activity is designed to build real-world investigative reasoning.
+        </p>
+      </div>
+      <div class="badgeRow">
+        <div class="chip"><strong>Series:</strong> CySA+ Analyst Simulation</div>
+        <div class="chip"><strong>Data:</strong> Randomized Each Run</div>
+        <div class="chip"><strong>Focus:</strong> Root Cause • Scope • Response</div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- LEFT: Evidence -->
+    <section class="card">
+      <div class="cardHeader">
+        <div>
+          <h2>Case Brief &amp; Evidence</h2>
+          <p>Review the artifacts. Do not assume tool names are inherently malicious. Parent/child relationships matter.</p>
+        </div>
+        <div class="row">
+          <button class="btn" id="btnRegenerate" title="Generate a new randomized run">New Run</button>
+          <button class="btn primary" id="btnRevealHint" title="Optional: show an investigative hint (practice only)">Investigative Hint</button>
+          <span class="pill" id="runIdPill">Run: —</span>
+        </div>
+      </div>
+      <div class="cardBody">
+        <div class="alert" id="alertText"></div>
+
+        <div class="divider"></div>
+
+        <div class="grid2">
+          <div>
+            <div class="kvs">
+              <div class="kvk">Hostname</div><div class="mono" id="kvHost">—</div>
+              <div class="kvk">User</div><div class="mono" id="kvUser">—</div>
+              <div class="kvk">Observed Window</div><div class="mono" id="kvWindow">—</div>
+              <div class="kvk">Notable Context</div><div class="muted" id="kvContext">—</div>
+            </div>
+          </div>
+          <div>
+            <div class="kvs">
+              <div class="kvk">Assigned Queue</div><div class="mono">Endpoint Investigations</div>
+              <div class="kvk">Case Objective</div><div class="muted">Determine primary suspicious chain, assess persistence/scope, and select the best analyst response.</div>
+              <div class="kvk">Evidence Rule</div><div class="muted">Use logs/process details provided here. Avoid guessing based on names alone.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <h3 style="margin:0 0 10px; font-size:13px;">Process List (Snapshot)</h3>
+        <table id="procTable" aria-label="Process list table">
+          <thead>
+            <tr>
+              <th style="width:70px">PID</th>
+              <th style="width:150px">Process</th>
+              <th style="width:160px">Parent</th>
+              <th>Path</th>
+              <th style="width:140px">User</th>
+              <th style="width:110px">Start</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+
+        <div class="divider"></div>
+
+        <h3 style="margin:0 0 10px; font-size:13px;">Process Lineage (Selected Relationships)</h3>
+        <table id="treeTable" aria-label="Process lineage table">
+          <thead>
+            <tr>
+              <th>Parent → Child</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+
+        <div class="divider"></div>
+
+        <div id="persistenceBlock" class="hidden">
+          <h3 style="margin:0 0 10px; font-size:13px;">Persistence Indicators (If Relevant)</h3>
+          <table id="persistTable" aria-label="Persistence table">
+            <thead>
+              <tr>
+                <th style="width:140px">Type</th>
+                <th style="width:260px">Location / Name</th>
+                <th>Value / Action</th>
+                <th style="width:120px">User/Context</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <p class="smallNote">
+            Note: Not every persistence artifact indicates malicious behavior. Evaluate whether it aligns with the suspicious execution chain.
+          </p>
+        </div>
+
+        <div id="hintBox" class="feedback fbWarn hidden" style="margin-top:14px;">
+          <div class="fbTitle">Investigative Hint (Practice)</div>
+          <div id="hintText"></div>
+        </div>
+
+        <div class="foot">
+          Training note: This simulation uses synthetic data and randomized details to reinforce real-world investigative reasoning and reduce pattern memorization.
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: Decisions -->
+    <aside class="card rightColSticky">
+      <div class="cardHeader">
+        <div>
+          <h2>Analyst Decisions</h2>
+          <p>Answer all tasks. Practice mode provides feedback; exam mode provides score only.</p>
+        </div>
+        <div class="toggle">
+          <label><input type="checkbox" id="modeToggle" /> Exam Mode</label>
+        </div>
+      </div>
+
+      <div class="cardBody">
+        <div class="q">
+          <h3>Task 1 — Identify the Primary Suspicious Process Chain</h3>
+          <p>Select the single chain that is most likely driving the alert based on lineage, context, and execution paths.</p>
+          <select id="q1_chain"></select>
+        </div>
+
+        <div class="q">
+          <h3>Task 2 — Classify the Observed Activity</h3>
+          <p>Choose the best overall classification based on the evidence provided.</p>
+          <div class="radioRow" id="q2_classify"></div>
+        </div>
+
+        <div class="q">
+          <h3>Task 3 — Assess Suspicious Persistence</h3>
+          <p>Is there evidence of persistence that appears linked to the suspicious activity?</p>
+          <div class="radioRow" id="q3_persistYesNo"></div>
+          <div style="margin-top:10px">
+            <label class="muted" style="font-size:12px; display:block; margin-bottom:6px;">If yes, identify the most relevant mechanism:</label>
+            <select id="q3_persistType"></select>
+          </div>
+        </div>
+
+        <div class="q">
+          <h3>Task 4 — Assess Scope</h3>
+          <p>Based on what you have here, what is the most defensible scope statement?</p>
+          <div class="radioRow" id="q4_scope"></div>
+        </div>
+
+        <div class="q">
+          <h3>Task 5 — Select the Most Appropriate Analyst Response</h3>
+          <p>Pick the best next step based on evidence and proportional response.</p>
+          <div class="radioRow" id="q5_response"></div>
+        </div>
+
+        <div class="row" style="margin-top:12px;">
+          <button class="btn primary" id="btnSubmit">Submit</button>
+          <button class="btn" id="btnReset">Reset Answers</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="scoreBox">
+          <div class="scoreBig" id="scoreText">Score: —</div>
+          <div class="pill" id="modePill">Mode: Practice</div>
+          <div class="pill" id="statusPill">Status: In Progress</div>
+        </div>
+
+        <div id="feedbackArea" class="hidden" style="margin-top:12px;"></div>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    /***********************
+     * Utilities
+     ***********************/
+    function randInt(min, max){ return Math.floor(Math.random()*(max-min+1))+min; }
+    function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+    function shuffle(arr){
+      const a = arr.slice();
+      for(let i=a.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+    function pad2(n){ return (n<10?'0':'')+n; }
+    function fmtTime(baseH, baseM, offsetMin){
+      let total = baseH*60 + baseM + offsetMin;
+      if(total<0) total = 0;
+      const h = Math.floor(total/60)%24;
+      const m = total%60;
+      return `${pad2(h)}:${pad2(m)}`;
+    }
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    /***********************
+     * Scenario Generator (Windows-only v1)
+     ***********************/
+    const LOLBINS = ["powershell.exe", "rundll32.exe", "wmic.exe", "mshta.exe"];
+    const HOSTS = ["WS-ACCT-14", "WS-SALES-07", "WS-HR-22", "WS-FIN-11", "WS-OPS-19"];
+    const USERS = ["j.smith", "m.davis", "a.lee", "k.johnson", "t.williams"];
+    const ADMIN_USERS = ["it.admin", "svc.sccm", "svc.backup", "svc.inventory"];
+
+    function buildBaseProcesses(ctx){
+      // Common baseline processes
+      // Each has: pid, name, parent, path, user, start
+      const baseH = ctx.baseH, baseM = ctx.baseM;
+      const u = ctx.user, host = ctx.host;
+      const rows = [];
+
+      // Helper to add process
+      let pidCursor = randInt(320, 980);
+      function add(name, parent, path, user, tOff){
+        pidCursor += randInt(7, 39);
+        rows.push({ pid: pidCursor, name, parent, path, user, start: fmtTime(baseH, baseM, tOff) });
+        return pidCursor;
+      }
+
+      const pidSystem = add("System", "—", "—", "NT AUTHORITY\\SYSTEM", -18);
+      const pidSmss = add("smss.exe", "System", "C:\\Windows\\System32\\smss.exe", "NT AUTHORITY\\SYSTEM", -17);
+      const pidCsrss = add("csrss.exe", "smss.exe", "C:\\Windows\\System32\\csrss.exe", "NT AUTHORITY\\SYSTEM", -16);
+      const pidWininit = add("wininit.exe", "smss.exe", "C:\\Windows\\System32\\wininit.exe", "NT AUTHORITY\\SYSTEM", -16);
+      const pidServices = add("services.exe", "wininit.exe", "C:\\Windows\\System32\\services.exe", "NT AUTHORITY\\SYSTEM", -15);
+      const pidLsass = add("lsass.exe", "wininit.exe", "C:\\Windows\\System32\\lsass.exe", "NT AUTHORITY\\SYSTEM", -15);
+      const pidSvchost = add("svchost.exe", "services.exe", "C:\\Windows\\System32\\svchost.exe", "NT AUTHORITY\\SYSTEM", -14);
+
+      const pidExplorer = add("explorer.exe", "userinit.exe", "C:\\Windows\\explorer.exe", `${ctx.domain}\\${u}`, -9);
+
+      // Normal user apps
+      const pidChrome = add(pick(["chrome.exe","msedge.exe"]), "explorer.exe",
+        pick(["C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe","C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"]),
+        `${ctx.domain}\\${u}`, -7);
+
+      const pidOutlook = add(pick(["OUTLOOK.EXE","Teams.exe"]), "explorer.exe",
+        pick(["C:\\Program Files\\Microsoft Office\\root\\Office16\\OUTLOOK.EXE","C:\\Users\\"+u+"\\AppData\\Local\\Microsoft\\Teams\\current\\Teams.exe"]),
+        `${ctx.domain}\\${u}`, -6);
+
+      // A benign scheduled task host
+      add("taskhostw.exe", "svchost.exe", "C:\\Windows\\System32\\taskhostw.exe", "NT AUTHORITY\\SYSTEM", -5);
+
+      // A benign security tool or agent
+      add(pick(["SenseIR.exe","MsMpEng.exe","CrowdStrike.exe","osqueryd.exe"]), "services.exe",
+        pick(["C:\\Program Files\\Windows Defender\\MsMpEng.exe","C:\\Program Files\\Microsoft Defender Advanced Threat Protection\\SenseIR.exe",
+              "C:\\Program Files\\osquery\\osqueryd.exe","C:\\Program Files\\SecurityAgent\\CrowdStrike.exe"]),
+        "NT AUTHORITY\\SYSTEM", -4);
+
+      // A benign updater
+      add(pick(["GoogleUpdate.exe","OneDrive.exe"]), "explorer.exe",
+        pick(["C:\\Program Files (x86)\\Google\\Update\\GoogleUpdate.exe","C:\\Users\\"+u+"\\AppData\\Local\\Microsoft\\OneDrive\\OneDrive.exe"]),
+        `${ctx.domain}\\${u}`, -3);
+
+      return { rows, pidExplorer, pidChrome, pidOutlook, pidSvchost, add, pidCursor };
+    }
+
+    function addBenignLOLBin(ctx, base){
+      // Legitimate LOLBin usage via management/inventory, designed as a decoy
+      // Example: ccmexec.exe -> powershell.exe (inventory) OR services -> wmic.exe (inventory)
+      const u = ctx.user;
+      const svc = pick(["svc.sccm","svc.inventory","svc.backup"]);
+      const baseH = ctx.baseH, baseM = ctx.baseM;
+      let pidCursor = base.pidCursor;
+
+      function add(name, parent, path, user, tOff){
+        pidCursor += randInt(11, 41);
+        base.rows.push({ pid: pidCursor, name, parent, path, user, start: fmtTime(baseH, baseM, tOff) });
+        return pidCursor;
+      }
+
+      const variant = pick(["sccm_powershell","inventory_wmic","signed_rundll32"]);
+      let chainLabel = "";
+      let chainNote = "";
+
+      if(variant === "sccm_powershell"){
+        // services -> ccmexec -> powershell
+        add("ccmexec.exe", "services.exe", "C:\\Windows\\CCM\\ccmexec.exe", `${ctx.domain}\\${svc}`, -2);
+        add("powershell.exe", "ccmexec.exe", "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+          `${ctx.domain}\\${svc}`, -2);
+        chainLabel = "ccmexec.exe → powershell.exe (inventory/maintenance)";
+        chainNote = "Management agent context; service account; system path; looks suspicious but aligns with endpoint management behavior.";
+      } else if(variant === "inventory_wmic"){
+        add("wmic.exe", "services.exe", "C:\\Windows\\System32\\wbem\\wmic.exe", `${ctx.domain}\\${svc}`, -2);
+        chainLabel = "services.exe → wmic.exe (asset inventory query)";
+        chainNote = "Service-launched inventory query; expected path; service account; typical for asset reporting.";
+      } else {
+        add("rundll32.exe", "explorer.exe", "C:\\Windows\\System32\\rundll32.exe", `${ctx.domain}\\${u}`, -2);
+        chainLabel = "explorer.exe → rundll32.exe (signed system DLL execution)";
+        chainNote = "User-launched but from System32; not inherently malicious without suspicious DLL path/args.";
+      }
+
+      base.pidCursor = pidCursor;
+      return { chainLabel, chainNote, variant };
+    }
+
+    function addLegitAdminActivity(ctx, base){
+      // A decoy that looks “hands-on-keyboard” but is legitimate admin work
+      const admin = pick(["it.admin", "it.admin", "svc.inventory"]); // bias to it.admin
+      const baseH = ctx.baseH, baseM = ctx.baseM;
+      let pidCursor = base.pidCursor;
+
+      function add(name, parent, path, user, tOff){
+        pidCursor += randInt(9, 37);
+        base.rows.push({ pid: pidCursor, name, parent, path, user, start: fmtTime(baseH, baseM, tOff) });
+        return pidCursor;
+      }
+
+      const pidCmd = add("cmd.exe", "explorer.exe", "C:\\Windows\\System32\\cmd.exe", `${ctx.domain}\\${admin}`, -1);
+      const action = pick(["ipconfig.exe","net.exe","schtasks.exe"]);
+      add(action, "cmd.exe",
+          action === "ipconfig.exe" ? "C:\\Windows\\System32\\ipconfig.exe" :
+          action === "net.exe" ? "C:\\Windows\\System32\\net.exe" :
+          "C:\\Windows\\System32\\schtasks.exe",
+          `${ctx.domain}\\${admin}`, -1);
+
+      base.pidCursor = pidCursor;
+      return {
+        chainLabel: "explorer.exe → cmd.exe → (standard admin tool)",
+        chainNote: "Admin context; common built-in tools; no user-writable execution path; not sufficient alone to declare malicious."
+      };
+    }
+
+    function addMaliciousPattern(ctx, base){
+      // Choose one pattern A/B/C (locked). Returns truth for scoring.
+      const pattern = pick(["A","B","C"]);
+      const u = ctx.user;
+      const baseH = ctx.baseH, baseM = ctx.baseM;
+      let pidCursor = base.pidCursor;
+
+      function add(name, parent, path, user, tOff){
+        pidCursor += randInt(13, 49);
+        base.rows.push({ pid: pidCursor, name, parent, path, user, start: fmtTime(baseH, baseM, tOff) });
+        return pidCursor;
+      }
+
+      const userWritable = pick([
+        `C:\\Users\\${u}\\AppData\\Local\\Temp`,
+        `C:\\Users\\${u}\\AppData\\Roaming`,
+        `C:\\Users\\${u}\\Downloads`
+      ]);
+
+      const sys32 = "C:\\Windows\\System32";
+      let maliciousChainLabel = "";
+      let maliciousChainNote = "";
+      let persistenceLinked = false;
+      let persistMechanism = "None";
+
+      // Extra child artifacts
+      const stageFile = pick([
+        `${userWritable}\\${pick(["update","cache","sync","helper"])}_${randInt(100,999)}.dat`,
+        `${userWritable}\\${pick(["win","svc","sys"])}_${randInt(1000,9999)}.tmp`,
+        `${userWritable}\\${pick(["img","doc","log"])}_${randInt(10,99)}.bin`
+      ]);
+
+      if(pattern === "A"){
+        // explorer -> powershell -> rundll32 (user-writable)
+        add("powershell.exe", "explorer.exe", `${sys32}\\WindowsPowerShell\\v1.0\\powershell.exe`, `${ctx.domain}\\${u}`, 0);
+        add("rundll32.exe", "powershell.exe", `${sys32}\\rundll32.exe`, `${ctx.domain}\\${u}`, 1);
+
+        // Add a suspicious-looking file/child process hint (but keep in notes table)
+        add(pick(["conhost.exe","dllhost.exe"]), "rundll32.exe", `${sys32}\\${pick(["conhost.exe","dllhost.exe"])}`, `${ctx.domain}\\${u}`, 1);
+
+        maliciousChainLabel = "explorer.exe → powershell.exe → rundll32.exe";
+        maliciousChainNote =
+          "User context + LOLBin chaining. The child process lineage and user-writable staging behavior are more meaningful than the tool names alone.";
+        persistenceLinked = false; // may still have unrelated persistence decoys
+        persistMechanism = "None";
+      }
+
+      if(pattern === "B"){
+        // outlook/browser -> mshta -> powershell or rundll32
+        const parent = pick(["OUTLOOK.EXE","chrome.exe","msedge.exe"]);
+        add("mshta.exe", parent, `${sys32}\\mshta.exe`, `${ctx.domain}\\${u}`, 0);
+        const follow = pick(["powershell.exe","rundll32.exe"]);
+        add(follow, "mshta.exe",
+          follow === "powershell.exe" ? `${sys32}\\WindowsPowerShell\\v1.0\\powershell.exe` : `${sys32}\\rundll32.exe`,
+          `${ctx.domain}\\${u}`, 1);
+
+        // add a benign-looking secondary artifact to increase realism
+        add(pick(["conhost.exe","WerFault.exe"]), follow, `${sys32}\\${pick(["conhost.exe","WerFault.exe"])}`, `${ctx.domain}\\${u}`, 1);
+
+        maliciousChainLabel = `${parent} → mshta.exe → ${follow}`;
+        maliciousChainNote =
+          "mshta.exe is a high-signal LOLBin when launched from user apps and immediately spawns additional execution. Evaluate parent process and timing.";
+        persistenceLinked = false;
+        persistMechanism = "None";
+      }
+
+      if(pattern === "C"){
+        // persistence-first detection: scheduled task or run key launches benign-looking exe from user-writable path
+        const fauxExe = `${userWritable}\\${pick(["OneDriveHelper","UpdateService","WinHost"])}.exe`;
+        // Add the running process
+        add(pick(["OneDriveHelper.exe","UpdateService.exe","WinHost.exe"]), "taskeng.exe", fauxExe, `${ctx.domain}\\${u}`, 0);
+        // Add child process (often LOLBin)
+        const child = pick(["powershell.exe","rundll32.exe"]);
+        add(child, pick(["OneDriveHelper.exe","UpdateService.exe","WinHost.exe"]),
+          child === "powershell.exe" ? `${sys32}\\WindowsPowerShell\\v1.0\\powershell.exe` : `${sys32}\\rundll32.exe`,
+          `${ctx.domain}\\${u}`, 1);
+
+        maliciousChainLabel = `Scheduled Task → ${fauxExe.split("\\").pop()} → ${child}`;
+        maliciousChainNote =
+          "A user-writable executable repeatedly launched by a task is a persistence signal. The follow-on LOLBin strengthens suspicion when tied to the same chain.";
+        persistenceLinked = true;
+        persistMechanism = pick(["Scheduled Task","Registry Run Key"]); // but we will surface whichever we choose later
+      }
+
+      base.pidCursor = pidCursor;
+
+      // Decide if we show persistence indicators block
+      // Locked: appears some runs, not all. Pattern C always includes suspicious persistence.
+      const showPersistence = (pattern === "C") ? true : (Math.random() < 0.50);
+
+      // If persistence block shown and pattern is not C, include benign persistence only (decoys)
+      // If pattern is C, include suspicious persistence aligned to malicious chain.
+      const persistence = [];
+      if(showPersistence){
+        // Always include at least one benign persistence artifact even when malicious exists (to force linkage reasoning)
+        persistence.push({
+          type: "Scheduled Task",
+          location: `\\Microsoft\\Windows\\OneDrive\\Standalone Update Task`,
+          value: `"C:\\Users\\${u}\\AppData\\Local\\Microsoft\\OneDrive\\OneDriveStandaloneUpdater.exe" /silent`,
+          who: `${ctx.domain}\\${u}`
+        });
+
+        if(pattern === "C"){
+          if(persistMechanism === "Scheduled Task"){
+            persistence.push({
+              type: "Scheduled Task",
+              location: `\\${pick(["Updater","WinHost","SystemCache"])}\\${pick(["DailySync","HealthCheck","Telemetry"])}_${randInt(10,99)}`,
+              value: `"${pick([`C:\\Users\\${u}\\AppData\\Local\\Temp\\${pick(["UpdateService","WinHost","OneDriveHelper"])}.exe`,
+                               `C:\\Users\\${u}\\AppData\\Roaming\\${pick(["UpdateService","WinHost","OneDriveHelper"])}.exe`])}"`,
+              who: `${ctx.domain}\\${u}`
+            });
+          } else {
+            persistence.push({
+              type: "Registry Run Key",
+              location: `HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\${pick(["WinHost","Updater","SystemCache"])}_${randInt(10,99)}`,
+              value: `"${pick([`C:\\Users\\${u}\\AppData\\Roaming\\${pick(["WinHost","UpdateService","OneDriveHelper"])}.exe`,
+                               `C:\\Users\\${u}\\AppData\\Local\\Temp\\${pick(["WinHost","UpdateService","OneDriveHelper"])}.exe`])}"`,
+              who: `${ctx.domain}\\${u}`
+            });
+          }
+        } else {
+          // Add another benign-ish persistence entry
+          persistence.push({
+            type: "Registry Run Key",
+            location: `HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\TeamsMachineUninstallerLocalAppData`,
+            value: `"C:\\Users\\${u}\\AppData\\Local\\Microsoft\\Teams\\Update.exe" --uninstall /s`,
+            who: `${ctx.domain}\\${u}`
+          });
+        }
+      }
+
+      // Determine scope statement (locked choices). We tailor the best answer slightly by pattern.
+      // Pattern C implies longer dwell; still single host evidence, but "possible broader impact" more defensible.
+      const scopeBest = (pattern === "C") ? "possible_lateral" : "single_only";
+
+      // Determine best response
+      const responseBest = (pattern === "C") ? "escalate_ir" : "isolate";
+
+      // Provide hint content (practice-only)
+      const hint = (pattern === "C")
+        ? "Start by linking any persistence indicator to a running process and its path. If a task/run key points to a user-writable executable, treat that linkage as high-signal."
+        : "Don’t anchor on tool names. Start with parent/child relationships, then validate paths (System32 vs user-writable), user context, and timing alignment.";
+
+      return {
+        pattern,
+        maliciousChainLabel,
+        maliciousChainNote,
+        showPersistence,
+        persistence,
+        persistenceLinked,
+        persistMechanism: (pattern === "C") ? persistMechanism : "None",
+        scopeBest,
+        responseBest,
+        hint
+      };
+    }
+
+    function generateScenario(){
+      const runId = `${Date.now().toString(36).slice(-6)}-${randInt(100,999)}`;
+      const host = pick(HOSTS);
+      const user = pick(USERS);
+      const domain = pick(["CORP","HQ","BUS"]);
+      const baseH = randInt(9, 14); // business hours-ish
+      const baseM = pick([0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]);
+
+      const ctx = { runId, host, user, domain, baseH, baseM };
+
+      const base = buildBaseProcesses(ctx);
+
+      // Decoys required: legitimate LOLBin, legitimate admin activity
+      const benignLol = addBenignLOLBin(ctx, base);
+      const adminAct = addLegitAdminActivity(ctx, base);
+
+      // True malicious pattern (one per run)
+      const truth = addMaliciousPattern(ctx, base);
+
+      // Ensure LOLBins count >= 2 each run (locked)
+      // Base decoy + malicious chain already should satisfy; but verify and if not, add benign lolbin.
+      const lolCount = base.rows.filter(r => LOLBINS.includes(r.name.toLowerCase())).length;
+      if(lolCount < 2){
+        addBenignLOLBin(ctx, base);
+      }
+
+      // Shuffle rows for realism, but keep “System” style first? We'll shuffle then sort by start time roughly.
+      // We'll keep a stable-ish ordering by start time then PID.
+      const rows = base.rows.slice().sort((a,b) => (a.start.localeCompare(b.start) || a.pid-b.pid));
+
+      // Build lineage focus table with 4 relationships:
+      // - Malicious chain
+      // - Benign LOLBin chain
+      // - Legit admin chain
+      // - One additional benign chain (browser -> renderer)
+      const lineage = [];
+
+      // Malicious chain relationship notes
+      lineage.push({
+        rel: truth.maliciousChainLabel,
+        note: truth.maliciousChainNote
+      });
+      lineage.push({
+        rel: benignLol.chainLabel,
+        note: benignLol.chainNote
+      });
+      lineage.push({
+        rel: adminAct.chainLabel,
+        note: adminAct.chainNote
+      });
+      lineage.push({
+        rel: `${pick(["chrome.exe","msedge.exe"])} → ${pick(["renderer.exe","utility.exe","crashpad_handler.exe"])}`,
+        note: "Common browser child behavior; not inherently suspicious without anomalous paths, arguments, or unusual parentage."
+      });
+
+      // Case brief / alert text
+      const alert = `Alert: Unusual process execution detected on endpoint ${host}. Review required.`;
+
+      // Context line
+      const contextBits = [];
+      contextBits.push(pick([
+        "User reported a brief system slowdown prior to the alert.",
+        "No user ticket was submitted; alert originated from endpoint telemetry.",
+        "User was actively working during the observed window.",
+        "No system reboot was reported during this window."
+      ]));
+      contextBits.push(pick([
+        "Some built-in tools appear in the process list; validate lineage before concluding intent.",
+        "At least one entry is a deliberate decoy designed to resemble suspicious behavior.",
+        "Focus on linking execution paths to user-writable locations."
+      ]));
+      const context = contextBits.join(" ");
+
+      const windowStr = `${fmtTime(baseH, baseM, -10)}–${fmtTime(baseH, baseM, 5)} (local time)`;
+
+      // Build chain choices for Task 1
+      const chainChoices = shuffle([
+        { id: "malicious", label: truth.maliciousChainLabel },
+        { id: "benignlol", label: benignLol.chainLabel },
+        { id: "admin", label: adminAct.chainLabel },
+        { id: "browser", label: "Browser process → standard helper/renderer process" }
+      ]);
+
+      // Persistence mechanism choices
+      const persistChoices = shuffle([
+        { id: "none", label: "No suspicious persistence linked to this activity" },
+        { id: "task", label: "Scheduled Task linked to suspicious executable/path" },
+        { id: "runkey", label: "Registry Run key linked to suspicious executable/path" },
+        { id: "benign", label: "Persistence artifacts present, but appear unrelated/benign" }
+      ]);
+
+      // Determine correct answers
+      const correct = {
+        q1_chain: "malicious",
+        q2_classify: "malicious",
+        q3_persistYesNo: (truth.pattern === "C") ? "yes" : "no", // suspicious persistence linked
+        q3_persistType: (() => {
+          if(truth.pattern !== "C") return "none";
+          return (truth.persistMechanism === "Scheduled Task") ? "task" : "runkey";
+        })(),
+        q4_scope: truth.scopeBest, // "single_only" or "possible_lateral"
+        q5_response: truth.responseBest // "isolate" or "escalate_ir"
+      };
+
+      // Practice explanations
+      const explain = {
+        q1: (truth.pattern === "C")
+          ? "The highest-signal chain is the one that ties persistence to execution: a task/run key launching a user-writable executable that then spawns additional built-in tooling. That linkage is more meaningful than any single process name."
+          : "The primary chain is the one with suspicious lineage and context: user-initiated execution chaining built-in tools, aligned timing, and user-writable staging indicators. Decoy LOLBin activity exists and should be ruled out using parent process and paths.",
+        q2: "Classification should be driven by lineage + context (who launched it, from where, and what spawned next). Legitimate LOLBin/admin usage can exist in the same snapshot; that does not negate a malicious chain.",
+        q3: (truth.pattern === "C")
+          ? "Suspicious persistence is present and linked to the execution chain. The key is correlation: a task/run key points to a user-writable executable that also appears running (or recently executed)."
+          : "Persistence indicators may appear in the evidence, but in this run they are not linked to the suspicious chain (or suspicious persistence is absent). Don’t mark persistence as malicious unless it correlates to the same executable/path/lineage.",
+        q4: (truth.pattern === "C")
+          ? "Persistence suggests longer dwell time and increased chance of additional activity beyond this snapshot. While you can’t prove lateral movement here, a cautious statement about possible broader impact is defensible."
+          : "The evidence provided supports a single-host finding. Without authentication logs, network connections, or additional host telemetry, expanding scope beyond the endpoint is not evidence-based.",
+        q5: (truth.pattern === "C")
+          ? "Escalate to Incident Response is the most appropriate next step here because persistence indicates ongoing risk and likely requires coordinated containment/eradication decisions beyond a single analyst action."
+          : "Isolating the endpoint is the most appropriate immediate step to contain potential ongoing execution and prevent further impact while deeper analysis proceeds. Reimaging/removal can be considered after IR triage."
+      };
+
+      return {
+        ctx,
+        alert,
+        windowStr,
+        context,
+        rows,
+        lineage,
+        persistence: truth.persistence,
+        showPersistence: truth.showPersistence,
+        chainChoices,
+        persistChoices,
+        correct,
+        explain,
+        hint: truth.hint
+      };
+    }
+
+    /***********************
+     * UI Wiring
+     ***********************/
+    let SCENARIO = null;
+
+    function setModePill(){
+      const exam = document.getElementById("modeToggle").checked;
+      document.getElementById("modePill").textContent = `Mode: ${exam ? "Exam" : "Practice"}`;
+      // Hide hint button in exam mode
+      document.getElementById("btnRevealHint").classList.toggle("hidden", exam);
+      if(exam){
+        document.getElementById("hintBox").classList.add("hidden");
+      }
+    }
+
+    function renderScenario(){
+      SCENARIO = generateScenario();
+
+      // Header pills + brief
+      document.getElementById("runIdPill").textContent = `Run: ${SCENARIO.ctx.runId}`;
+      document.getElementById("alertText").textContent = SCENARIO.alert;
+      document.getElementById("kvHost").textContent = SCENARIO.ctx.host;
+      document.getElementById("kvUser").textContent = `${SCENARIO.ctx.domain}\\${SCENARIO.ctx.user}`;
+      document.getElementById("kvWindow").textContent = SCENARIO.windowStr;
+      document.getElementById("kvContext").textContent = SCENARIO.context;
+
+      // Process table
+      const procTbody = document.querySelector("#procTable tbody");
+      procTbody.innerHTML = "";
+      for(const r of SCENARIO.rows){
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="mono">${escapeHtml(r.pid)}</td>
+          <td class="mono">${escapeHtml(r.name)}</td>
+          <td class="mono">${escapeHtml(r.parent)}</td>
+          <td class="mono">${escapeHtml(r.path)}</td>
+          <td class="mono">${escapeHtml(r.user)}</td>
+          <td class="mono">${escapeHtml(r.start)}</td>
+        `;
+        procTbody.appendChild(tr);
+      }
+
+      // Lineage table
+      const treeTbody = document.querySelector("#treeTable tbody");
+      treeTbody.innerHTML = "";
+      for(const l of SCENARIO.lineage){
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="mono">${escapeHtml(l.rel)}</td>
+          <td>${escapeHtml(l.note)}</td>
+        `;
+        treeTbody.appendChild(tr);
+      }
+
+      // Persistence block
+      const pb = document.getElementById("persistenceBlock");
+      pb.classList.toggle("hidden", !SCENARIO.showPersistence);
+      const persistTbody = document.querySelector("#persistTable tbody");
+      persistTbody.innerHTML = "";
+      if(SCENARIO.showPersistence){
+        for(const p of SCENARIO.persistence){
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="mono">${escapeHtml(p.type)}</td>
+            <td class="mono">${escapeHtml(p.location)}</td>
+            <td class="mono">${escapeHtml(p.value)}</td>
+            <td class="mono">${escapeHtml(p.who)}</td>
+          `;
+          persistTbody.appendChild(tr);
+        }
+      }
+
+      // Hint
+      document.getElementById("hintText").textContent = SCENARIO.hint;
+      document.getElementById("hintBox").classList.add("hidden");
+
+      // Build Task 1 choices
+      const q1 = document.getElementById("q1_chain");
+      q1.innerHTML = `<option value="" selected disabled>Select a process chain…</option>`;
+      for(const c of SCENARIO.chainChoices){
+        const opt = document.createElement("option");
+        opt.value = c.id;
+        opt.textContent = c.label;
+        q1.appendChild(opt);
+      }
+
+      // Task 2 radios
+      const q2Wrap = document.getElementById("q2_classify");
+      q2Wrap.innerHTML = "";
+      const q2Options = shuffle([
+        { id:"legit", t:"Legitimate activity", d:"Execution aligns with expected tools, expected paths, and expected parent processes." },
+        { id:"suspicious_benign", t:"Suspicious but benign", d:"Odd-looking entries exist, but evidence does not support malicious intent." },
+        { id:"malicious", t:"Malicious execution", d:"Lineage + context indicate malicious use of built-in tooling or persistence behavior." }
+      ]);
+      for(const o of q2Options){
+        q2Wrap.appendChild(makeRadio("q2", o.id, o.t, o.d));
+      }
+
+      // Task 3 persistence yes/no
+      const q3YN = document.getElementById("q3_persistYesNo");
+      q3YN.innerHTML = "";
+      const ynOpts = shuffle([
+        { id:"yes", t:"Yes — suspicious persistence is linked to the suspicious activity", d:"A persistence artifact points to the same executable/path/behavior as the suspicious chain." },
+        { id:"no", t:"No — no suspicious persistence linked to this activity", d:"Persistence may be absent or unrelated/benign based on linkage." }
+      ]);
+      for(const o of ynOpts){
+        q3YN.appendChild(makeRadio("q3yn", o.id, o.t, o.d));
+      }
+
+      // Task 3 persistence type dropdown
+      const q3Type = document.getElementById("q3_persistType");
+      q3Type.innerHTML = `<option value="" selected disabled>Select a mechanism…</option>`;
+      for(const c of SCENARIO.persistChoices){
+        const opt = document.createElement("option");
+        opt.value = c.id;
+        opt.textContent = c.label;
+        q3Type.appendChild(opt);
+      }
+
+      // Task 4 scope radios
+      const q4Wrap = document.getElementById("q4_scope");
+      q4Wrap.innerHTML = "";
+      const q4Options = shuffle([
+        { id:"single_only", t:"Single endpoint only", d:"Evidence supports activity on this endpoint; additional telemetry would be required to expand scope." },
+        { id:"possible_lateral", t:"Possible broader impact", d:"Indicators (e.g., persistence) suggest longer dwell time; additional scoping is warranted even if not proven here." },
+        { id:"insufficient", t:"Insufficient data to determine scope", d:"You cannot responsibly scope impact from these artifacts alone; request additional telemetry." }
+      ]);
+      for(const o of q4Options){
+        q4Wrap.appendChild(makeRadio("q4", o.id, o.t, o.d));
+      }
+
+      // Task 5 response radios
+      const q5Wrap = document.getElementById("q5_response");
+      q5Wrap.innerHTML = "";
+      const q5Options = shuffle([
+        { id:"monitor", t:"Monitor and document", d:"Capture notes and watch for recurrence without taking containment action." },
+        { id:"isolate", t:"Isolate the endpoint", d:"Contain potential ongoing activity and prevent follow-on actions while investigation proceeds." },
+        { id:"reimage", t:"Remove persistence + reimage", d:"Proceed directly to eradication without additional triage/coordination." },
+        { id:"escalate_ir", t:"Escalate to Incident Response", d:"Hand off with evidence and request coordinated containment/eradication actions." },
+        { id:"false_positive", t:"Close as false positive", d:"Conclude no malicious activity is present." }
+      ]);
+      for(const o of q5Options){
+        q5Wrap.appendChild(makeRadio("q5", o.id, o.t, o.d));
+      }
+
+      // Reset scoring/feedback
+      resetScoreUi();
+      resetAnswersUi();
+      setModePill();
+    }
+
+    function makeRadio(groupName, value, title, desc){
+      const label = document.createElement("label");
+      label.className = "radio";
+      const id = `${groupName}_${value}_${Math.random().toString(16).slice(2)}`;
+      label.innerHTML = `
+        <input type="radio" name="${groupName}" value="${escapeHtml(value)}" id="${escapeHtml(id)}" />
+        <div>
+          <div class="rt">${escapeHtml(title)}</div>
+          <div class="rd">${escapeHtml(desc)}</div>
+        </div>
+      `;
+      label.addEventListener("click", (e) => {
+        const input = label.querySelector("input[type=radio]");
+        if(input) input.checked = true;
+      });
+      return label;
+    }
+
+    function resetScoreUi(){
+      document.getElementById("scoreText").textContent = "Score: —";
+      document.getElementById("statusPill").textContent = "Status: In Progress";
+      const fb = document.getElementById("feedbackArea");
+      fb.classList.add("hidden");
+      fb.innerHTML = "";
+    }
+
+    function resetAnswersUi(){
+      document.getElementById("q1_chain").value = "";
+      // clear radios
+      for(const name of ["q2","q3yn","q4","q5"]){
+        document.querySelectorAll(`input[name="${name}"]`).forEach(i => i.checked = false);
+      }
+      document.getElementById("q3_persistType").value = "";
+    }
+
+    function getChecked(name){
+      const el = document.querySelector(`input[name="${name}"]:checked`);
+      return el ? el.value : "";
+    }
+
+    function computeScore(ans){
+      const correct = SCENARIO.correct;
+      const points = { q1:20, q2:20, q3:20, q4:20, q5:20 };
+      let score = 0;
+      const detail = {};
+
+      detail.q1 = (ans.q1_chain === correct.q1_chain);
+      detail.q2 = (ans.q2_classify === correct.q2_classify);
+      // Task 3: both yes/no and mechanism must match when yes; if no, mechanism should be "none" or empty.
+      const ynOk = (ans.q3_persistYesNo === correct.q3_persistYesNo);
+      let mechOk = false;
+      if(correct.q3_persistYesNo === "yes"){
+        mechOk = (ans.q3_persistType === correct.q3_persistType);
+      } else {
+        mechOk = (ans.q3_persistType === "" || ans.q3_persistType === "none" || ans.q3_persistType === "benign");
+      }
+      detail.q3 = (ynOk && mechOk);
+
+      detail.q4 = (ans.q4_scope === correct.q4_scope);
+      detail.q5 = (ans.q5_response === correct.q5_response);
+
+      score += detail.q1 ? points.q1 : 0;
+      score += detail.q2 ? points.q2 : 0;
+      score += detail.q3 ? points.q3 : 0;
+      score += detail.q4 ? points.q4 : 0;
+      score += detail.q5 ? points.q5 : 0;
+
+      return { score, detail, points };
+    }
+
+    function renderFeedback(result){
+      const exam = document.getElementById("modeToggle").checked;
+      const fb = document.getElementById("feedbackArea");
+      fb.innerHTML = "";
+      fb.classList.remove("hidden");
+
+      if(exam){
+        // Score only
+        fb.className = "hidden"; // hide entirely in exam mode per requirement
+        return;
+      }
+
+      // Practice mode: feedback + explanations
+      const { detail } = result;
+
+      const blocks = [
+        {
+          key:"q1",
+          title:"Task 1 — Primary Chain",
+          ok: detail.q1,
+          text: SCENARIO.explain.q1
+        },
+        {
+          key:"q2",
+          title:"Task 2 — Classification",
+          ok: detail.q2,
+          text: SCENARIO.explain.q2
+        },
+        {
+          key:"q3",
+          title:"Task 3 — Persistence",
+          ok: detail.q3,
+          text: SCENARIO.explain.q3
+        },
+        {
+          key:"q4",
+          title:"Task 4 — Scope",
+          ok: detail.q4,
+          text: SCENARIO.explain.q4
+        },
+        {
+          key:"q5",
+          title:"Task 5 — Analyst Response",
+          ok: detail.q5,
+          text: SCENARIO.explain.q5
+        }
+      ];
+
+      // Build feedback area
+      for(const b of blocks){
+        const div = document.createElement("div");
+        div.className = "feedback " + (b.ok ? "fbGood" : "fbBad");
+        div.style.marginBottom = "10px";
+        div.innerHTML = `
+          <div class="fbTitle">${escapeHtml(b.title)} — ${b.ok ? "Correct" : "Needs Improvement"}</div>
+          <div>${escapeHtml(b.text)}</div>
+        `;
+        fb.appendChild(div);
+      }
+
+      const wrap = document.createElement("div");
+      wrap.className = "feedback fbWarn";
+      wrap.innerHTML = `
+        <div class="fbTitle">Analyst Reminder</div>
+        <div>
+          Treat built-in tooling as context, not verdict. The strongest signals come from:
+          <span class="mono">parent → child relationships</span>, execution from <span class="mono">user-writable paths</span>,
+          and persistence that <em>correlates</em> to the same executable/behavior.
+        </div>
+      `;
+      fb.appendChild(wrap);
+    }
+
+    /***********************
+     * Events
+     ***********************/
+    document.getElementById("btnRegenerate").addEventListener("click", () => {
+      renderScenario();
+      window.scrollTo({top:0, behavior:"smooth"});
+    });
+
+    document.getElementById("btnRevealHint").addEventListener("click", () => {
+      const exam = document.getElementById("modeToggle").checked;
+      if(exam) return;
+      document.getElementById("hintBox").classList.toggle("hidden");
+    });
+
+    document.getElementById("modeToggle").addEventListener("change", () => {
+      setModePill();
+      // In exam mode, hide any visible feedback/hints
+      const exam = document.getElementById("modeToggle").checked;
+      if(exam){
+        document.getElementById("feedbackArea").classList.add("hidden");
+        document.getElementById("hintBox").classList.add("hidden");
+      }
+      resetScoreUi();
+    });
+
+    document.getElementById("btnReset").addEventListener("click", () => {
+      resetAnswersUi();
+      resetScoreUi();
+    });
+
+    document.getElementById("btnSubmit").addEventListener("click", () => {
+      const ans = {
+        q1_chain: document.getElementById("q1_chain").value,
+        q2_classify: getChecked("q2"),
+        q3_persistYesNo: getChecked("q3yn"),
+        q3_persistType: document.getElementById("q3_persistType").value,
+        q4_scope: getChecked("q4"),
+        q5_response: getChecked("q5")
+      };
+
+      // Validate completion lightly (still allow submit; score accordingly)
+      const res = computeScore(ans);
+      const exam = document.getElementById("modeToggle").checked;
+
+      document.getElementById("scoreText").textContent = `Score: ${res.score}/100`;
+      document.getElementById("statusPill").textContent = "Status: Submitted";
+
+      if(exam){
+        // Score only
+        document.getElementById("feedbackArea").classList.add("hidden");
+      } else {
+        renderFeedback(res);
+      }
+    });
+
+    // Init
+    renderScenario();
+  </script>
+</body>
+</html>

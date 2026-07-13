@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cybersecurity Configuration Verification Lab</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .simulation-description {
+            background-color: #fffde7;
+            padding: 15px;
+            border-left: 4px solid #ffd600;
+            margin-bottom: 25px;
+            border-radius: 4px;
+        }
+        
+        .guidelines {
+            background-color: #e8f5e9;
+            padding: 15px;
+            border-left: 4px solid #4caf50;
+            margin-bottom: 25px;
+            border-radius: 4px;
+        }
+        
+        .server-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .server-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .server-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-right: 10px;
+        }
+        
+        .server-data {
+            padding: 15px;
+            background-color: #263238;
+            color: #b0bec5;
+            font-family: 'Courier New', monospace;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin-bottom: 15px;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .checkboxes {
+            background-color: #eceff1;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        
+        .checkbox-item {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .checkbox-item input {
+            margin-right: 10px;
+        }
+        
+        .recommendations {
+            margin-top: 30px;
+        }
+        
+        .recommendation-item {
+            background-color: #e8f4fd;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .recommendation-server {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .recommendation-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .recommendation-action {
+            color: #0277bd;
+        }
+        
+        button {
+            background-color: #2196f3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #0d8bf2;
+        }
+        
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .correct {
+            color: #4caf50;
+            font-weight: bold;
+        }
+        
+        .incorrect {
+            color: #f44336;
+            font-weight: bold;
+        }
+        
+        .tab-container {
+            margin-bottom: 20px;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            background-color: #e0e0e0;
+            cursor: pointer;
+            border-radius: 4px 4px 0 0;
+            margin-right: 5px;
+        }
+        
+        .tab.active {
+            background-color: #2196f3;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 0 4px 4px 4px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Cybersecurity Configuration Verification Lab</h1>
+        </header>
+        
+        <div class="simulation-description">
+            <h3>Instructions:</h3>
+            <p>You are a cybersecurity analyst tasked with interpreting scan data from Company A's servers. You must verify the requirements are being met for all of the servers and recommend changes if you find they are not.</p>
+        </div>
+        
+        <div class="guidelines">
+            <h3>Hardening Guidelines:</h3>
+            <ul>
+                <li>TLS 1.2 is the only version of TLS running.</li>
+                <li>Latest Version Of Apache should be used (2.4.18).</li>
+                <li>Only default ports should be used.</li>
+            </ul>
+        </div>
+        
+        <div class="tab-container">
+            <div class="tabs">
+                <div class="tab active" data-tab="part1">Part 1: Verification</div>
+                <div class="tab" data-tab="part2">Part 2: Recommendations</div>
+            </div>
+            
+            <div class="tab-content active" id="part1">
+                <h3>Server Scan Data Analysis</h3>
+                <p>Review the scan data for each server and check the appropriate boxes to indicate compliance with hardening guidelines.</p>
+                
+                <div class="server-section">
+                    <div class="server-header">
+                        <div class="server-title">AppServ1</div>
+                    </div>
+                    <div class="server-data">HTTP/1.1 200 OK
+Date: Wed, 26 Jun 2019 21:15:15 GMT
+Server: Apache/2.4.18 (Ubuntu)
+Last-Modified: Wed, 26 Jun 2019 21:10:22 GMT
+ETag: "13520-58c497b3017fe"
+Accept-Ranges: bytes
+Content-Length: 79126
+Vary: Accept-Encoding
+Cache-Control: max-age=3600
+Expires: Wed, 26 Jun 2019 22:15:15 GMT
+Content-Type: text/html
+
+root@INFOSC2:~# nmap --script ssl-enum-ciphers appserv1.fictionalorg.com -p 443
+
+Starting Nmap 6.40 ( http://nmap.org ) at 2019-06-26 16:07 GMT
+
+Nmap scan report for appserv1.fictionalorg.com (10.21.4.68)
+Host is up (0.042s latency).
+rDNS record for 10.21.4.68: insideApps.fictionalorg.com
+PORT    STATE SERVICE
+443/tcp open  https
+| ssl-enum-ciphers: 
+|   TLSv1.2: 
+|     ciphers: 
+|       TLS_RSA_WITH_AES_128_CBC_SHA - strong
+|       TLS_RSA_WITH_AES_256_CBC_SHA - strong
+|     compressors: 
+|       NULL
+|     least strength: strong</div>
+                    <div class="checkboxes">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="appserv1-tls" name="appserv1-tls">
+                            <label for="appserv1-tls">AppServ1 is only using TLS 1.2</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="appserv1-apache" name="appserv1-apache">
+                            <label for="appserv1-apache">AppServ1 is using latest version of Apache</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="server-section">
+                    <div class="server-header">
+                        <div class="server-title">AppServ2</div>
+                    </div>
+                    <div class="server-data">root@INFOSC2:~# curl --head appserv2.fictionalorg.com:443
+
+HTTP/1.1 200 OK
+Date: Wed, 26 Jun 2019 21:15:15 GMT
+Server: Apache/2.1.0 (Ubuntu)
+Last-Modified: Wed, 26 Jun 2019 21:10:22 GMT
+ETag: "13520-58c497b3017fe"
+Accept-Ranges: bytes
+Content-Length: 79126
+Vary: Accept-Encoding
+Cache-Control: max-age=3600
+Expires: Wed, 26 Jun 2019 22:15:15 GMT
+Content-Type: text/html
+
+root@INFOSC2:~# nmap --script ssl-enum-ciphers appserv2.fictionalorg.com -p 443
+
+Starting Nmap 6.40 ( http://nmap.org ) at 2019-06-26 16:07 GMT
+
+Nmap scan report for appserv2.fictionalorg.com (10.21.4.69)
+Host is up (0.042s latency).
+PORT    STATE SERVICE
+443/tcp open  https
+| ssl-enum-ciphers: 
+|   TLSv1.1: 
+|     ciphers: 
+|       TLS_RSA_WITH_3DES_EDE_CBC_SHA - strong
+|       TLS_RSA_WITH_AES_128_CBC_SHA - strong
+|       TLS_RSA_WITH_AES_256_CBC_SHA - strong
+|     compressors: 
+|       NULL
+|   TLSv1.2: 
+|     ciphers: 
+|       TLS_RSA_WITH_AES_128_CBC_SHA - strong
+|       TLS_RSA_WITH_AES_256_CBC_SHA - strong
+|       TLS_RSA_WITH_AES_128_CBC_SHA256 - strong
+|       TLS_RSA_WITH_AES_256_CBC_SHA256 - strong
+|     compressors: 
+|       NULL
+|     least strength: strong</div>
+                    <div class="checkboxes">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="appserv2-tls" name="appserv2-tls">
+                            <label for="appserv2-tls">AppServ2 is only using TLS 1.2</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="appserv2-apache" name="appserv2-apache">
+                            <label for="appserv2-apache">AppServ2 is using latest version of Apache</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="server-section">
+                    <div class="server-header">
+                        <div class="server-title">AppServ3</div>
+                    </div>
+                    <div class="server-data">root@INFOSC2:~# curl --head appserv3.fictionalorg.com:443
+
+HTTP/1.1 200 OK
+Date: Wed, 26 Jun 2019 21:15:15 GMT
+Server: Apache/2.4.18 (Ubuntu)
+Last-Modified: Wed, 26 Jun 2019 21:10:22 GMT
+ETag: "13520-58c497b3017fe"
+Accept-Ranges: bytes
+Content-Length: 79126
+Vary: Accept-Encoding
+Cache-Control: max-age=3600
+Expires: Wed, 26 Jun 2019 22:15:15 GMT
+Content-Type: text/html
+
+root@INFOSC2:~# nmap --script ssl-enum-ciphers appserv3.fictionalorg.com -p 443
+
+Starting Nmap 6.40 ( http://nmap.org ) at 2019-06-26 16:07 GMT
+
+Nmap scan report for AppServ3.fictionalorg.com (10.21.4.70)
+Host is up (0.15s latency).
+rDNS record for 10.21.4.70: insideApps.fictionalorg.com
+PORT    STATE SERVICE
+80/tcp  open  http
+443/tcp open  https
+41/tcp  open  ssl
+| ssl-enum-ciphers: 
+|   TLSv1.1: 
+|     ciphers: 
+|       TLS_RSA_WITH_3DES_EDE_CBC_SHA - strong
+|       TLS_RSA_WITH_AES_128_CBC_SHA - strong
+|       TLS_RSA_WITH_AES_256_CBC_SHA - strong
+|     compressors: 
+|       NULL
+|   TLSv1.2: 
+|     ciphers: 
+|       TLS_RSA_WITH_AES_128_CBC_SHA - strong
+|       TLS_RSA_WITH_AES_256_CBC_SHA - strong
+|     compressors: 
+|       NULL
+|     least strength: strong</div>
+                    <div class="checkboxes">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="appserv3-tls" name="appserv3-tls">
+                            <label for="appserv3-tls">AppServ3 is only using TLS 1.2</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="appserv3-apache" name="appserv3-apache">
+                            <label for="appserv3-apache">AppServ3 is using latest version of Apache</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="server-section">
+                    <div class="server-header">
+                        <div class="server-title">AppServ4</div>
+                    </div>
+                    <div class="server-data">root@INFOSC2:~# curl --head appserv4.fictionalorg.com:443
+
+HTTP/1.1 200 OK
+Date: Wed, 26 Jun 2019 21:15:15 GMT
+Server: Apache/2.4.18 (Ubuntu)
+Last-Modified: Wed, 26 Jun 2019 21:10:22 GMT
+ETag: "13520-58c497b3017fe"
+Accept-Ranges: bytes
+Content-Length: 79126
+Vary: Accept-Encoding
+Cache-Control: max-age=3600
+Expires: Wed, 26 Jun 2019 22:15:15 GMT
+Content-Type: text/html
+
+root@INFOSC2:~# nmap --script ssl-enum-ciphers appserv4.fictionalorg.com -p 443
+
+Starting Nmap 6.40 ( http://nmap.org ) at 2019-06-27 10:13 GMT
+
+Nmap scan report for appserv4.fictionalorg.com (10.21.4.71)
+Host is up (0.13s latency).
+rDNS record for 10.21.4.71: appserv4.fictionalorg.com
+PORT    STATE SERVICE
+443/tcp open  https
+80/tcp  open  http
+8443/tcp open  ssl
+41/tcp  open  ssl
+| ssl-enum-ciphers: 
+|   TLSv1.2: 
+|     ciphers: 
+|       TLS_RSA_WITH_AES_128_CBC_SHA - strong
+|       TLS_RSA_WITH_AES_256_CBC_SHA - strong
+|       TLS_RSA_WITH_AES_128_CBC_SHA256 - strong
+|       TLS_RSA_WITH_AES_256_CBC_SHA256 - strong
+|     compressors: 
+|       NULL
+|     least strength: strong</div>
+                    <div class="checkboxes">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="appserv4-tls" name="appserv4-tls">
+                            <label for="appserv4-tls">AppServ4 is only using TLS 1.2</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="appserv4-apache" name="appserv4-apache">
+                            <label for="appserv4-apache">AppServ4 is using latest version of Apache</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <button id="verify-part1">Verify Configuration</button>
+                
+                <div class="results" id="results-part1">
+                    <h4>Verification Results:</h4>
+                    <p>Your answer: <span id="part1-score"></span></p>
+                    <div id="part1-feedback"></div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="part2">
+                <h3>Configuration Change Recommendations</h3>
+                <p>Based on your analysis of the scan data, provide recommendations for necessary changes to ensure compliance with the hardening guidelines.</p>
+                
+                <div class="server-section">
+                    <div class="server-header">
+                        <div class="server-title">Server Selection</div>
+                    </div>
+                    
+                    <select id="server-select" class="server-dropdown">
+                        <option value="">Select a server...</option>
+                        <option value="appserv1">AppServ1</option>
+                        <option value="appserv2">AppServ2</option>
+                        <option value="appserv3">AppServ3</option>
+                        <option value="appserv4">AppServ4</option>
+                    </select>
+                    
+                    <div id="recommendation-options" style="margin-top: 15px; display: none;">
+                        <div class="recommendation-section">
+                            <h4>Service</h4>
+                            <select id="service-select">
+                                <option value="">Select a service...</option>
+                                <option value="httpd">HTTPD Security</option>
+                                <option value="apache">Apache Version</option>
+                                <option value="ports">Non-Default Ports</option>
+                            </select>
+                        </div>
+                        
+                        <div class="recommendation-section" style="margin-top: 15px;">
+                            <h4>Change Recommendation</h4>
+                            <select id="change-select">
+                                <option value="">Select a change...</option>
+                                <!-- Options will be populated based on service selection -->
+                            </select>
+                        </div>
+                        
+                        <button id="add-recommendation" style="margin-top: 15px;">Add Recommendation</button>
+                    </div>
+                </div>
+                
+                <div class="recommendations" id="recommendation-list">
+                    <h4>Your Recommendations:</h4>
+                    <!-- Recommendations will be added here -->
+                </div>
+                
+                <button id="verify-part2" style="margin-top: 15px;">Verify Recommendations</button>
+                
+                <div class="results" id="results-part2">
+                    <h4>Recommendation Results:</h4>
+                    <p>Your recommendations: <span id="part2-score"></span></p>
+                    <div id="part2-feedback"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab switching
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    // Remove active class from all tabs and contents
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    // Add active class to clicked tab and corresponding content
+                    this.classList.add('active');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+            
+            // Part 1: Verification
+            const verifyPart1Button = document.getElementById('verify-part1');
+            verifyPart1Button.addEventListener('click', function() {
+                const appserv1Tls = document.getElementById('appserv1-tls').checked;
+                const appserv1Apache = document.getElementById('appserv1-apache').checked;
+                const appserv2Tls = document.getElementById('appserv2-tls').checked;
+                const appserv2Apache = document.getElementById('appserv2-apache').checked;
+                const appserv3Tls = document.getElementById('appserv3-tls').checked;
+                const appserv3Apache = document.getElementById('appserv3-apache').checked;
+                const appserv4Tls = document.getElementById('appserv4-tls').checked;
+                const appserv4Apache = document.getElementById('appserv4-apache').checked;
+                
+                // Correct answers
+                const correctAnswers = {
+                    'appserv1-tls': true,
+                    'appserv1-apache': true,
+                    'appserv2-tls': false,
+                    'appserv2-apache': false,
+                    'appserv3-tls': false,
+                    'appserv3-apache': true,
+                    'appserv4-tls': true,
+                    'appserv4-apache': true
+                };
+                
+                const userAnswers = {
+                    'appserv1-tls': appserv1Tls,
+                    'appserv1-apache': appserv1Apache,
+                    'appserv2-tls': appserv2Tls,
+                    'appserv2-apache': appserv2Apache,
+                    'appserv3-tls': appserv3Tls,
+                    'appserv3-apache': appserv3Apache,
+                    'appserv4-tls': appserv4Tls,
+                    'appserv4-apache': appserv4Apache
+                };
+                
+                // Calculate score
+                let correctCount = 0;
+                for (const key in correctAnswers) {
+                    if (correctAnswers[key] === userAnswers[key]) {
+                        correctCount++;
+                    }
+                }
+                
+                const scorePercentage = (correctCount / Object.keys(correctAnswers).length) * 100;
+                
+                // Display results
+                const resultsDiv = document.getElementById('results-part1');
+                const scoreSpan = document.getElementById('part1-score');
+                const feedbackDiv = document.getElementById('part1-feedback');
+                
+                scoreSpan.textContent = `${scorePercentage.toFixed(0)}% correct (${correctCount}/${Object.keys(correctAnswers).length})`;
+                
+                // Generate feedback
+                let feedbackHtml = '<ul>';
+                
+                if (userAnswers['appserv1-tls'] !== correctAnswers['appserv1-tls']) {
+                    feedbackHtml += '<li class="incorrect">AppServ1 TLS check is incorrect. The scan shows it is only using TLS 1.2.</li>';
+                } else {
+                    feedbackHtml += '<li class="correct">AppServ1 TLS check is correct.</li>';
+                }
+                
+                if (userAnswers['appserv1-apache'] !== correctAnswers['appserv1-apache']) {
+                    feedbackHtml += '<li class="incorrect">AppServ1 Apache check is incorrect. The scan shows it is using Apache 2.4.18.</li>';
+                } else {
+                    feedbackHtml += '<li class="correct">AppServ1 Apache check is correct.</li>';
+                }
+                
+                if (userAnswers['appserv2-tls'] !== correctAnswers['appserv2-tls']) {
+                    feedbackHtml += '<li class="incorrect">AppServ2 TLS check is incorrect. The scan shows it is using TLSv1.1 and TLSv1.2.</li>';
+                } else {
+                    feedbackHtml += '<li class="correct">AppServ2 TLS check is correct.</li>';
+                }
+                
+                if (userAnswers['appserv2-apache'] !== correctAnswers['appserv2-apache']) {
+                    feedbackHtml += '<li class="incorrect">AppServ2 Apache check is incorrect. The scan shows it is using Apache 2.1.0, which is below the required 2.4.18.</li>';
+                } else {
+                    feedbackHtml += '<li class="correct">AppServ2 Apache check is correct.</li>';
+                }
+                
+                if (userAnswers['appserv3-tls'] !== correctAnswers['appserv3-tls']) {
+                    feedbackHtml += '<li class="incorrect">AppServ3 TLS check is incorrect. The scan shows it is using TLSv1.1 and TLSv1.2.</li>';
+                } else {
+                    feedbackHtml += '<li class="correct">AppServ3 TLS check is correct.</li>';
+                }
+                
+                if (userAnswers['appserv3-apache'] !== correctAnswers['appserv3-apache']) {
+                    feedbackHtml += '<li class="incorrect">AppServ3 Apache check is incorrect. The scan shows it is using Apache 2.4.18.</li>';
+                } else {
+                    feedbackHtml += '<li class="correct">AppServ3 Apache check is correct.</li>';
+                }
+                
+                if (userAnswers['appserv4-tls'] !== correctAnswers['appserv4-tls']) {
+                    feedbackHtml += '<li class="incorrect">AppServ4 TLS check is incorrect. The scan shows it is only using TLSv1.2.</li>';
+                } else {
+                    feedbackHtml += '<li class="correct">AppServ4 TLS check is correct.</li>';
+                }
+                
+                if (userAnswers['appserv4-apache'] !== correctAnswers['appserv4-apache']) {
+                    feedbackHtml += '<li class="incorrect">AppServ4 Apache check is incorrect. The scan shows it is using Apache 2.4.18.</li>';
+                } else {
+                    feedbackHtml += '<li class="correct">AppServ4 Apache check is correct.</li>';
+                }
+                
+                feedbackHtml += '</ul>';
+                
+                feedbackDiv.innerHTML = feedbackHtml;
+                resultsDiv.style.display = 'block';
+            });
+            
+            // Part 2: Recommendations
+            const serverSelect = document.getElementById('server-select');
+            const serviceSelect = document.getElementById('service-select');
+            const changeSelect = document.getElementById('change-select');
+            const recommendationOptions = document.getElementById('recommendation-options');
+            const recommendationList = document.getElementById('recommendation-list');
+            const addRecommendationButton = document.getElementById('add-recommendation');
+            const verifyPart2Button = document.getElementById('verify-part2');
+            
+            // Display recommendation options when server is selected
+            serverSelect.addEventListener('change', function() {
+                if (this.value) {
+                    recommendationOptions.style.display = 'block';
+                } else {
+                    recommendationOptions.style.display = 'none';
+                }
+            });
+            
+            // Update change options based on service selection
+            serviceSelect.addEventListener('change', function() {
+                changeSelect.innerHTML = '<option value="">Select a change...</option>';
+                
+                if (this.value === 'httpd') {
+                    changeSelect.innerHTML += '<option value="restrict-tls">Restrict to TLS 1.2</option>';
+                } else if (this.value === 'apache') {
+                    changeSelect.innerHTML += '<option value="upgrade">Upgrade Version</option>';
+                } else if (this.value === 'ports') {
+                    changeSelect.innerHTML += '<option value="remove">Remove Non-Default Ports</option>';
+                }
+            });
+            
+            // Add recommendation
+            let recommendationCount = 0;
+            const recommendations = [];
+            
+            addRecommendationButton.addEventListener('click', function() {
+                const server = serverSelect.value;
+                const service = serviceSelect.value;
+                const change = changeSelect.value;
+                
+                if (!server || !service || !change) {
+                    alert('Please select all options to add a recommendation.');
+                    return;
+                }
+                
+                const recommendationId = `recommendation-${recommendationCount}`;
+                recommendationCount++;
+                
+                const recommendation = {
+                    id: recommendationId,
+                    server: server,
+                    service: service,
+                    change: change
+                };
+                
+                recommendations.push(recommendation);
+                
+                // Create recommendation item
+                const recommendationItem = document.createElement('div');
+                recommendationItem.id = recommendationId;
+                recommendationItem.className = 'recommendation-item';
+                recommendationItem.style.display = 'block';
+                
+                let serviceName = '';
+                if (service === 'httpd') {
+                    serviceName = 'HTTPD Security';
+                } else if (service === 'apache') {
+                    serviceName = 'Apache Version';
+                } else if (service === 'ports') {
+                    serviceName = 'Non-Default Ports';
+                }
+                
+                let changeName = '';
+                if (change === 'restrict-tls') {
+                    changeName = 'Restrict to TLS 1.2';
+                } else if (change === 'upgrade') {
+                    changeName = 'Upgrade Version';
+                } else if (change === 'remove') {
+                    changeName = 'Remove Non-Default Ports';
+                }
+                
+                recommendationItem.innerHTML = `
+                    <div class="recommendation-server">${server.toUpperCase()}</div>
+                    <div class="recommendation-title">${serviceName}</div>
+                    <div class="recommendation-action">${changeName}</div>
+                    <button class="remove-recommendation" data-id="${recommendationId}">Remove</button>
+                `;
+                
+                recommendationList.appendChild(recommendationItem);
+                
+                // Reset selections
+                serverSelect.value = '';
+                serviceSelect.value = '';
+                changeSelect.innerHTML = '<option value="">Select a change...</option>';
+                recommendationOptions.style.display = 'none';
+            });
+            
+            // Remove recommendation
+            recommendationList.addEventListener('click', function(e) {
+                if (e.target.classList.contains('remove-recommendation')) {
+                    const id = e.target.getAttribute('data-id');
+                    const item = document.getElementById(id);
+                    
+                    // Remove from DOM
+                    item.remove();
+                    
+                    // Remove from array
+                    const index = recommendations.findIndex(r => r.id === id);
+                    if (index !== -1) {
+                        recommendations.splice(index, 1);
+                    }
+                }
+            });
+            
+            // Verify recommendations
+            verifyPart2Button.addEventListener('click', function() {
+                // Expected recommendations
+                const expectedRecommendations = [
+                    { server: 'appserv2', service: 'httpd', change: 'restrict-tls' },
+                    { server: 'appserv2', service: 'apache', change: 'upgrade' },
+                    { server: 'appserv3', service: 'httpd', change: 'restrict-tls' },
+                    { server: 'appserv3', service: 'ports', change: 'remove' },
+                    { server: 'appserv4', service: 'ports', change: 'remove' }
+                ];
+                
+                // Check which expected recommendations were made
+                const correctRecommendations = [];
+                const missingRecommendations = [];
+                const incorrectRecommendations = [];
+                
+                // Check for correct and incorrect recommendations
+                recommendations.forEach(rec => {
+                    const isExpected = expectedRecommendations.some(expected => 
+                        expected.server === rec.server && 
+                        expected.service === rec.service && 
+                        expected.change === rec.change
+                    );
+                    
+                    if (isExpected) {
+                        correctRecommendations.push(rec);
+                    } else {
+                        incorrectRecommendations.push(rec);
+                    }
+                });
+                
+                // Check for missing recommendations
+                expectedRecommendations.forEach(expected => {
+                    const wasMade = recommendations.some(rec => 
+                        expected.server === rec.server && 
+                        expected.service === rec.service && 
+                        expected.change === rec.change
+                    );
+                    
+                    if (!wasMade) {
+                        missingRecommendations.push(expected);
+                    }
+                });
+                
+                // Calculate score
+                const correctPercentage = (correctRecommendations.length / expectedRecommendations.length) * 100;
+                
+                // Display results
+                const resultsDiv = document.getElementById('results-part2');
+                const scoreSpan = document.getElementById('part2-score');
+                const feedbackDiv = document.getElementById('part2-feedback');
+                
+                scoreSpan.textContent = `${correctPercentage.toFixed(0)}% correct (${correctRecommendations.length}/${expectedRecommendations.length})`;
+                
+                // Generate feedback
+                let feedbackHtml = '';
+                
+                if (correctRecommendations.length > 0) {
+                    feedbackHtml += '<h5 class="correct">Correct Recommendations:</h5><ul>';
+                    correctRecommendations.forEach(rec => {
+                        let serviceName = '';
+                        if (rec.service === 'httpd') {
+                            serviceName = 'HTTPD Security';
+                        } else if (rec.service === 'apache') {
+                            serviceName = 'Apache Version';
+                        } else if (rec.service === 'ports') {
+                            serviceName = 'Non-Default Ports';
+                        }
+                        
+                        let changeName = '';
+                        if (rec.change === 'restrict-tls') {
+                            changeName = 'Restrict to TLS 1.2';
+                        } else if (rec.change === 'upgrade') {
+                            changeName = 'Upgrade Version';
+                        } else if (rec.change === 'remove') {
+                            changeName = 'Remove Non-Default Ports';
+                        }
+                        
+                        feedbackHtml += `<li class="correct">${rec.server.toUpperCase()} - ${serviceName} - ${changeName}</li>`;
+                    });
+                    feedbackHtml += '</ul>';
+                }
+                
+                if (missingRecommendations.length > 0) {
+                    feedbackHtml += '<h5 class="incorrect">Missing Recommendations:</h5><ul>';
+                    missingRecommendations.forEach(rec => {
+                        let serviceName = '';
+                        if (rec.service === 'httpd') {
+                            serviceName = 'HTTPD Security';
+                        } else if (rec.service === 'apache') {
+                            serviceName = 'Apache Version';
+                        } else if (rec.service === 'ports') {
+                            serviceName = 'Non-Default Ports';
+                        }
+                        
+                        let changeName = '';
+                        if (rec.change === 'restrict-tls') {
+                            changeName = 'Restrict to TLS 1.2';
+                        } else if (rec.change === 'upgrade') {
+                            changeName = 'Upgrade Version';
+                        } else if (rec.change === 'remove') {
+                            changeName = 'Remove Non-Default Ports';
+                        }
+                        
+                        feedbackHtml += `<li class="incorrect">${rec.server.toUpperCase()} - ${serviceName} - ${changeName}</li>`;
+                    });
+                    feedbackHtml += '</ul>';
+                }
+                
+                if (incorrectRecommendations.length > 0) {
+                    feedbackHtml += '<h5 class="incorrect">Incorrect Recommendations:</h5><ul>';
+                    incorrectRecommendations.forEach(rec => {
+                        let serviceName = '';
+                        if (rec.service === 'httpd') {
+                            serviceName = 'HTTPD Security';
+                        } else if (rec.service === 'apache') {
+                            serviceName = 'Apache Version';
+                        } else if (rec.service === 'ports') {
+                            serviceName = 'Non-Default Ports';
+                        }
+                        
+                        let changeName = '';
+                        if (rec.change === 'restrict-tls') {
+                            changeName = 'Restrict to TLS 1.2';
+                        } else if (rec.change === 'upgrade') {
+                            changeName = 'Upgrade Version';
+                        } else if (rec.change === 'remove') {
+                            changeName = 'Remove Non-Default Ports';
+                        }
+                        
+                        feedbackHtml += `<li class="incorrect">${rec.server.toUpperCase()} - ${serviceName} - ${changeName}</li>`;
+                    });
+                    feedbackHtml += '</ul>';
+                }
+                
+                feedbackDiv.innerHTML = feedbackHtml;
+                resultsDiv.style.display = 'block';
+                
+                // If all correct, show success message
+                if (correctRecommendations.length === expectedRecommendations.length && incorrectRecommendations.length === 0) {
+                    feedbackDiv.innerHTML += '<p class="correct"><strong>Great job! You\'ve correctly identified all the necessary recommendations.</strong></p>';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

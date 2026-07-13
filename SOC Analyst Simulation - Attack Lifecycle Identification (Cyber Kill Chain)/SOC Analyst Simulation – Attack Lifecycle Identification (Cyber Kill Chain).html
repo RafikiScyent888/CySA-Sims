@@ -1,0 +1,1092 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SOC Analyst Simulation – Attack Lifecycle Identification (Cyber Kill Chain)</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#111a33;
+      --panel2:#0f1730;
+      --ink:#eaf0ff;
+      --muted:#b8c4e6;
+      --line:#22305a;
+      --accent:#7aa2ff;
+      --good:#22c55e;
+      --bad:#ef4444;
+      --warn:#f59e0b;
+      --chip:#16224a;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 16px;
+      --radius2: 12px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--ink);
+      background: radial-gradient(1200px 600px at 20% 10%, rgba(122,162,255,.18), transparent 60%),
+                  radial-gradient(900px 500px at 80% 20%, rgba(34,197,94,.12), transparent 60%),
+                  linear-gradient(180deg, var(--bg), #070a14);
+      min-height:100vh;
+    }
+
+    .wrap{max-width:1180px; margin:0 auto; padding:22px 16px 42px;}
+    header{
+      display:flex; gap:14px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap;
+      padding:18px 18px 12px;
+      background: linear-gradient(180deg, rgba(17,26,51,.92), rgba(17,26,51,.72));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .title{
+      display:flex; flex-direction:column; gap:6px;
+      max-width: 820px;
+    }
+    h1{
+      margin:0;
+      font-size: 20px;
+      letter-spacing:.2px;
+    }
+    .sub{
+      color:var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .disclaimer{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius: 12px;
+      background: rgba(15,23,48,.85);
+      border:1px solid var(--line);
+      color: var(--muted);
+      font-size: 12.5px;
+    }
+    .disclaimer strong{color:var(--ink)}
+    .controls{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+    }
+    .pill{
+      display:flex; align-items:center; gap:8px;
+      padding:10px 12px;
+      border-radius: 999px;
+      background: rgba(15,23,48,.85);
+      border:1px solid var(--line);
+    }
+    .pill label{font-size:13px; color:var(--muted)}
+    .pill select, .pill button{
+      background: transparent;
+      color: var(--ink);
+      border: none;
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* =========================================================
+       ✅ DARK UI READABILITY FIX (Select + dropdown options)
+       This prevents the native dropdown list from using low-contrast
+       system colors on dark backgrounds.
+       ========================================================= */
+    select{
+      background-color: rgba(15,23,48,.95);
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+    select option, select optgroup{
+      background-color: rgba(15,23,48,.98);
+      color: var(--ink);
+    }
+    /* Selected/hovered option (browser support varies; harmless if ignored) */
+    select option:checked,
+    select option:hover{
+      background-color: rgba(122,162,255,.28);
+      color: #ffffff;
+    }
+    /* ========================================================= */
+
+    .btn{
+      padding:10px 12px;
+      border-radius: 999px;
+      border:1px solid var(--line);
+      background: rgba(15,23,48,.85);
+      color: var(--ink);
+      font-size: 13px;
+      cursor:pointer;
+      transition: transform .06s ease, border-color .2s ease;
+    }
+    .btn:hover{border-color: rgba(122,162,255,.75)}
+    .btn:active{transform: translateY(1px)}
+    .btn.primary{
+      border-color: rgba(122,162,255,.85);
+      background: rgba(122,162,255,.15);
+    }
+
+    .grid{
+      margin-top:16px;
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:16px;
+    }
+    @media (max-width: 980px){
+      .grid{grid-template-columns:1fr}
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(17,26,51,.92), rgba(17,26,51,.72));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .head{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+      padding:14px 16px;
+      border-bottom:1px solid var(--line);
+      background: rgba(10,16,32,.45);
+    }
+    .card .head .left{
+      display:flex; flex-direction:column; gap:3px;
+    }
+    .card .head .kicker{
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .card .head .name{
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .chiprow{display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end}
+    .chip{
+      padding:6px 10px;
+      border-radius: 999px;
+      background: var(--chip);
+      border:1px solid var(--line);
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .chip strong{color:var(--ink)}
+    .body{padding:14px 16px 16px}
+
+    .evidence{
+      background: rgba(15,23,48,.78);
+      border:1px solid var(--line);
+      border-radius: var(--radius2);
+      padding:12px 12px 10px;
+    }
+    .evidence .label{
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    pre{
+      margin:0;
+      padding:12px;
+      border-radius: 12px;
+      background: rgba(7,10,20,.6);
+      border:1px solid rgba(34,48,90,.8);
+      color: #eaf0ff;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      line-height: 1.35;
+      overflow:auto;
+      white-space: pre-wrap;
+    }
+
+    .phase-list{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+    .opt{
+      display:flex;
+      gap:10px;
+      padding:12px 12px;
+      border-radius: 14px;
+      border:1px solid var(--line);
+      background: rgba(15,23,48,.78);
+      cursor:pointer;
+      transition: border-color .2s ease, transform .06s ease;
+    }
+    .opt:hover{border-color: rgba(122,162,255,.7)}
+    .opt:active{transform: translateY(1px)}
+    .opt input{margin-top:3px}
+    .opt .meta{display:flex; flex-direction:column; gap:4px}
+    .opt .meta .t{font-weight:600; font-size: 13.5px}
+    .opt .meta .d{color:var(--muted); font-size: 12.5px; line-height: 1.25}
+
+    .actions{
+      display:flex; gap:10px; flex-wrap:wrap;
+      margin-top: 12px;
+      align-items:center;
+    }
+    .status{
+      margin-left:auto;
+      color:var(--muted);
+      font-size: 12.5px;
+    }
+
+    .feedback{
+      margin-top: 12px;
+      border-radius: 14px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      background: rgba(15,23,48,.78);
+      display:none;
+    }
+    .feedback.show{display:block}
+    .fb-top{
+      display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+      margin-bottom: 8px;
+    }
+    .badge{
+      padding:6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      border:1px solid var(--line);
+      background: rgba(7,10,20,.6);
+      color: var(--muted);
+    }
+    .badge.good{border-color: rgba(34,197,94,.7); color: #d7ffe5}
+    .badge.bad{border-color: rgba(239,68,68,.7); color: #ffe0e0}
+    .badge.warn{border-color: rgba(245,158,11,.7); color: #fff0cf}
+    .fb-body{
+      color: var(--ink);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .fb-body .muted{color: var(--muted)}
+    .fb-body ul{margin:8px 0 0 18px}
+    .fb-body li{margin:6px 0}
+
+    .summary{
+      margin-top: 12px;
+      border-radius: 14px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      background: rgba(15,23,48,.78);
+      display:none;
+    }
+    .summary.show{display:block}
+    .summary h3{margin:0 0 8px; font-size: 14px}
+    .summary .row{
+      display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;
+      padding:8px 0;
+      border-bottom: 1px solid rgba(34,48,90,.55);
+      color: var(--muted);
+      font-size: 12.5px;
+    }
+    .summary .row:last-child{border-bottom:none}
+    .summary .row strong{color:var(--ink)}
+
+    .footer-note{
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.35;
+    }
+    .kbd{
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 8px;
+      border:1px solid rgba(34,48,90,.8);
+      background: rgba(7,10,20,.55);
+      color: var(--ink);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <h1>SOC Analyst Simulation – Attack Lifecycle Identification (Cyber Kill Chain) (8 Scenarios)</h1>
+        <div class="sub">
+          Identify the <strong>single most likely</strong> Kill Chain phase based on evidence. You are seeing only a slice of the environment—earlier/later phases may be unobserved.
+        </div>
+        <div class="disclaimer">
+          <strong>Instructor-designed training simulation.</strong> Built to develop analyst pattern recognition and decision-making using public frameworks. Not affiliated with CompTIA, and not derived from confidential exam materials.
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="pill">
+          <label for="modeSel">Mode</label>
+          <select id="modeSel" aria-label="Mode">
+            <option value="practice">Practice (feedback after submit)</option>
+            <option value="exam">Exam (no feedback until end)</option>
+          </select>
+        </div>
+
+        <button class="btn" id="resetBtn" type="button">Reset Attempts</button>
+        <button class="btn primary" id="finishBtn" type="button">Finish / Show Summary</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- LEFT: Scenario + Evidence -->
+      <section class="card" aria-label="Scenario">
+        <div class="head">
+          <div class="left">
+            <div class="kicker">Scenario</div>
+            <div class="name" id="scenarioName">—</div>
+          </div>
+          <div class="chiprow">
+            <div class="chip">Progress: <strong id="progressTxt">0/8</strong></div>
+            <div class="chip">Score: <strong id="scoreTxt">0</strong></div>
+            <div class="chip">Status: <strong id="statusTxt">Not started</strong></div>
+          </div>
+        </div>
+
+        <div class="body">
+          <div class="pill" style="width:100%; justify-content:space-between;">
+            <label for="scenarioSel">Select scenario</label>
+            <select id="scenarioSel" aria-label="Select scenario">
+              <!-- populated by JS -->
+            </select>
+          </div>
+
+          <div style="height:12px"></div>
+
+          <div class="evidence">
+            <div class="label">
+              <span><strong>Evidence snapshot</strong> (what the analyst can see right now)</span>
+              <span class="muted" id="evidenceType">—</span>
+            </div>
+            <pre id="evidencePre">Select a scenario to begin.</pre>
+          </div>
+
+          <div class="footer-note">
+            Tip: Focus on <strong>what is happening now</strong>. Ask yourself: “If I brief a SOC lead in one sentence, what phase are we observing?”
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: Phase selection -->
+      <section class="card" aria-label="Phase selection">
+        <div class="head">
+          <div class="left">
+            <div class="kicker">Task</div>
+            <div class="name">Which Kill Chain phase is this?</div>
+          </div>
+          <div class="chiprow">
+            <div class="chip"><span class="kbd">Submit</span> to lock your answer</div>
+          </div>
+        </div>
+
+        <div class="body">
+          <div class="phase-list" id="phaseList">
+            <!-- populated by JS -->
+          </div>
+
+          <div class="actions">
+            <button class="btn primary" id="submitBtn" type="button">Submit Answer</button>
+            <button class="btn" id="clearBtn" type="button">Clear Selection</button>
+            <div class="status" id="attemptTxt">Attempt: —</div>
+          </div>
+
+          <div class="feedback" id="feedbackBox" aria-live="polite">
+            <div class="fb-top">
+              <div class="badge" id="fbBadge">—</div>
+              <div class="badge" id="fbPhase">—</div>
+            </div>
+            <div class="fb-body" id="fbBody"></div>
+          </div>
+
+          <div class="summary" id="summaryBox">
+            <h3>Exam Summary</h3>
+            <div class="row"><span>Final score</span><strong id="finalScore">—</strong></div>
+            <div class="row"><span>Answered</span><strong id="finalAnswered">—</strong></div>
+            <div class="row"><span>Correct</span><strong id="finalCorrect">—</strong></div>
+            <div class="row"><span>Review guidance</span><strong id="finalGuidance">—</strong></div>
+          </div>
+
+          <div class="footer-note">
+            In <strong>Exam mode</strong>, feedback stays hidden until you click <strong>Finish / Show Summary</strong>.
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+<script>
+/* ===========================
+   Frozen Framework Constants
+   =========================== */
+
+const PHASES = [
+  {
+    key: "Reconnaissance",
+    desc: "Information gathering, target profiling, identifying users, systems, and exposure (often before any payload is sent)."
+  },
+  {
+    key: "Weaponization",
+    desc: "Building/preparing a deliverable payload (e.g., malicious doc, exploit kit config, trojanized installer) for the target."
+  },
+  {
+    key: "Delivery",
+    desc: "Transmitting the payload to the target (email, web download, drive-by, USB, messaging, etc.)."
+  },
+  {
+    key: "Exploitation",
+    desc: "Triggering code execution by exploiting a vulnerability or user action (macro execution, RCE, browser exploit)."
+  },
+  {
+    key: "Installation",
+    desc: "Establishing persistence or installing malicious components (services, scheduled tasks, startup items, backdoor)."
+  },
+  {
+    key: "Command and Control",
+    desc: "Remote communications channel established (beaconing, periodic outbound connections, DNS/HTTPS C2, callbacks)."
+  },
+  {
+    key: "Actions on Objectives",
+    desc: "Achieving goals: credential theft, lateral movement, data access/exfiltration, encryption, sabotage."
+  }
+];
+
+const SCENARIOS = [
+  {
+    id: 1,
+    title: "Scenario 1",
+    evidenceType: "OSINT notes + web/app telemetry",
+    correct: "Reconnaissance",
+    evidence: [
+      "SOC ticket notes:",
+      "- A new external IP repeatedly enumerated employee profile pages and public press releases.",
+      "- Requests include '/team', '/leadership', '/careers', and 'org chart' related pages.",
+      "",
+      "Web access logs (excerpt):",
+      "2026-01-05 13:10:22 198.51.100.77 GET /leadership 200 UA=Mozilla/5.0",
+      "2026-01-05 13:11:04 198.51.100.77 GET /careers 200 UA=Mozilla/5.0",
+      "2026-01-05 13:12:17 198.51.100.77 GET /team 200 UA=Mozilla/5.0",
+      "2026-01-05 13:13:02 198.51.100.77 GET /press/2025-q4-results 200 UA=Mozilla/5.0",
+      "",
+      "Analyst observation:",
+      "- No emails quarantined, no endpoint alerts yet, no suspicious binaries observed."
+    ].join("\n"),
+    rationale: {
+      whyCorrect: [
+        "The activity is focused on gathering publicly available information and profiling the target.",
+        "There is no evidence a payload was created, sent, or executed yet."
+      ],
+      keyClues: [
+        "Enumeration of public-facing pages tied to people/org structure",
+        "No endpoint execution, no email delivery, no persistence, no beaconing"
+      ],
+      temptingButWrong: [
+        { phase: "Delivery", note: "Delivery would show a payload being sent (email, download link, attachment), not just browsing." },
+        { phase: "Weaponization", note: "Weaponization is building the payload; the evidence shows target research, not payload prep." }
+      ]
+    }
+  },
+  {
+    id: 2,
+    title: "Scenario 2",
+    evidenceType: "Email gateway sandbox summary",
+    correct: "Weaponization",
+    evidence: [
+      "Secure Email Gateway (SEG) sandbox report:",
+      "- Attachment: 'Benefits_Update_Q1.docm'",
+      "- Embedded macro references org-specific strings: 'HR-PORTAL', 'Benefits Team', and internal department names.",
+      "- Macro logic builds a command line that pulls a staged file name matching your org naming convention.",
+      "",
+      "Sandbox notes:",
+      "- Document not delivered to end users yet (blocked at gateway).",
+      "- No host telemetry associated with execution in the environment."
+    ].join("\n"),
+    rationale: {
+      whyCorrect: [
+        "The payload (malicious macro document) is prepared and tailored for the target.",
+        "Evidence indicates staging/assembly of the exploit content, not successful transmission or execution."
+      ],
+      keyClues: [
+        "Org-specific strings baked into the macro",
+        "Blocked before delivery; no endpoint execution artifacts"
+      ],
+      temptingButWrong: [
+        { phase: "Delivery", note: "Delivery would be evidence of the payload reaching users/inboxes or being downloaded." },
+        { phase: "Exploitation", note: "Exploitation would require the macro or exploit to actually execute on a host." }
+      ]
+    }
+  },
+  {
+    id: 3,
+    title: "Scenario 3",
+    evidenceType: "Email header + SEG log",
+    correct: "Delivery",
+    evidence: [
+      "SEG log:",
+      "- Message accepted and delivered to 7 recipients in Finance.",
+      "- Subject: 'January Invoice - Action Required'",
+      "- Attachment: 'Invoice_010526.zip' (contains 'Invoice_010526.iso')",
+      "",
+      "Header excerpt:",
+      "From: vendor-billing@accounts-example.com",
+      "Reply-To: billing@accounts-example.com",
+      "Received: from mail.accounts-example.com (203.0.113.44)",
+      "Authentication-Results: spf=pass dkim=pass dmarc=pass",
+      "",
+      "Analyst observation:",
+      "- No endpoint alerts yet. No confirmed execution."
+    ].join("\n"),
+    rationale: {
+      whyCorrect: [
+        "This is the moment the payload is transmitted to the target environment (delivered to inboxes).",
+        "No evidence of execution or persistence is shown in this snapshot."
+      ],
+      keyClues: [
+        "Delivered to multiple internal recipients",
+        "Payload present (zip/iso), but no host execution evidence"
+      ],
+      temptingButWrong: [
+        { phase: "Weaponization", note: "Weaponization is building the payload; here we see the payload being sent and received." },
+        { phase: "Exploitation", note: "Exploitation would show execution (macro, process spawn, exploit activity) on endpoints." }
+      ]
+    }
+  },
+  {
+    id: 4,
+    title: "Scenario 4",
+    evidenceType: "EDR process tree",
+    correct: "Exploitation",
+    evidence: [
+      "EDR Alert: Suspicious process chain",
+      "Host: FIN-LT-044",
+      "",
+      "Process tree:",
+      "WINWORD.EXE (user: j.smith) launched",
+      "  -> powershell.exe -NoP -W Hidden -Enc <base64>",
+      "      -> rundll32.exe C:\\Users\\j.smith\\AppData\\Local\\Temp\\x1.tmp,EntryPoint",
+      "",
+      "Notes:",
+      "- Alert triggered at time of document open.",
+      "- No persistence mechanisms confirmed yet in this snapshot."
+    ].join("\n"),
+    rationale: {
+      whyCorrect: [
+        "We see code execution triggered by user interaction with the document (process spawn from WINWORD).",
+        "This is the 'break-in' moment—execution—not yet the persistence stage."
+      ],
+      keyClues: [
+        "WINWORD spawning PowerShell",
+        "Encoded/hidden execution",
+        "No confirmed scheduled task/service/run key yet"
+      ],
+      temptingButWrong: [
+        { phase: "Installation", note: "Installation would show persistence or installed components (tasks, services, startup items)." },
+        { phase: "Delivery", note: "Delivery is the email/file arriving; here it is already being executed on-host." }
+      ]
+    }
+  },
+  {
+    id: 5,
+    title: "Scenario 5",
+    evidenceType: "Windows event logs + EDR",
+    correct: "Installation",
+    evidence: [
+      "Windows Security / System logs (excerpt):",
+      "Event ID 4698: A scheduled task was created.",
+      "  Task Name: \\Microsoft\\Windows\\Update\\UpdateCheck",
+      "  Action: C:\\ProgramData\\upd\\updsvc.exe /silent",
+      "",
+      "Event ID 7045: A service was installed in the system.",
+      "  Service Name: UpdSvc",
+      "  Image Path: C:\\ProgramData\\upd\\updsvc.exe",
+      "",
+      "EDR note:",
+      "- File first seen 2 minutes after suspicious PowerShell activity on same host."
+    ].join("\n"),
+    rationale: {
+      whyCorrect: [
+        "Scheduled tasks and services are classic persistence mechanisms—malware is establishing a foothold.",
+        "The payload is being set up to survive reboots and continue execution."
+      ],
+      keyClues: [
+        "New scheduled task (4698)",
+        "New service install (7045)",
+        "Executable placed in ProgramData"
+      ],
+      temptingButWrong: [
+        { phase: "Exploitation", note: "Exploitation is the initial execution. Persistence artifacts indicate the next phase: installation." },
+        { phase: "Command and Control", note: "C2 would show outbound beacons/callbacks; these logs show persistence being created." }
+      ]
+    }
+  },
+  {
+    id: 6,
+    title: "Scenario 6",
+    evidenceType: "Proxy + DNS logs",
+    correct: "Command and Control",
+    evidence: [
+      "Proxy logs (excerpt):",
+      "2026-01-05 14:22:01 FIN-LT-044 CONNECT updates-check[.]net:443 200 bytes_out=312 bytes_in=844",
+      "2026-01-05 14:24:01 FIN-LT-044 CONNECT updates-check[.]net:443 200 bytes_out=318 bytes_in=860",
+      "2026-01-05 14:26:01 FIN-LT-044 CONNECT updates-check[.]net:443 200 bytes_out=320 bytes_in=858",
+      "",
+      "DNS logs:",
+      "FIN-LT-044 query updates-check[.]net -> 198.51.100.210 TTL=60 (newly observed domain)",
+      "",
+      "Analyst note:",
+      "- Traffic is periodic and low-volume. No large data transfer observed in this excerpt."
+    ].join("\n"),
+    rationale: {
+      whyCorrect: [
+        "Periodic low-volume outbound connections to a newly observed domain are typical beaconing behavior.",
+        "This suggests the host is checking in with a remote controller."
+      ],
+      keyClues: [
+        "Regular interval connections",
+        "New domain with short TTL",
+        "Low-volume, consistent traffic (beacon pattern)"
+      ],
+      temptingButWrong: [
+        { phase: "Actions on Objectives", note: "That would show data theft, lateral movement, encryption, or business impact—none is shown here." },
+        { phase: "Installation", note: "Installation is persistence setup; this evidence is about outbound communications." }
+      ]
+    }
+  },
+  {
+    id: 7,
+    title: "Scenario 7",
+    evidenceType: "DLP + proxy",
+    correct: "Actions on Objectives",
+    evidence: [
+      "DLP Alert:",
+      "- Detected creation of archive: C:\\Users\\j.smith\\Documents\\Q4_Financials.zip (482 MB)",
+      "- Classified file match: 'Financial-Statements' policy",
+      "",
+      "Proxy logs (excerpt):",
+      "2026-01-05 15:03:12 FIN-LT-044 POST https://fileshare-example[.]com/upload bytes_out=512,889,120 bytes_in=1,224",
+      "",
+      "Analyst note:",
+      "- Prior ticket indicates earlier beaconing to an unfamiliar domain."
+    ].join("\n"),
+    rationale: {
+      whyCorrect: [
+        "Creating large archives of sensitive documents and uploading them externally indicates the attacker is executing their objective (exfiltration).",
+        "This is impact-oriented activity rather than initial access or persistence."
+      ],
+      keyClues: [
+        "Large archive creation",
+        "Sensitive classification match",
+        "Large outbound POST/upload volume"
+      ],
+      temptingButWrong: [
+        { phase: "Command and Control", note: "C2 is communications. Large uploads of sensitive data indicate the objective stage." },
+        { phase: "Delivery", note: "Delivery is sending the payload to the target—not sending the target’s data out." }
+      ]
+    }
+  },
+  {
+    id: 8,
+    title: "Scenario 8",
+    evidenceType: "Authentication logs + admin share activity",
+    correct: "Actions on Objectives",
+    evidence: [
+      "Authentication logs:",
+      "2026-01-05 15:18:40 Account 'j.smith' successful logon type 3 from FIN-LT-044 to FS-01",
+      "2026-01-05 15:19:05 Account 'j.smith' successful logon type 3 from FIN-LT-044 to HR-APP-02",
+      "",
+      "File server logs:",
+      "FS-01: Access to \\\\FS-01\\ADMIN$ and \\\\FS-01\\C$ from FIN-LT-044",
+      "",
+      "EDR note (HR-APP-02):",
+      "- Remote process execution observed: 'wmic.exe process call create ...'",
+      "",
+      "Analyst note:",
+      "- This activity began after the original workstation showed suspicious persistence."
+    ].join("\n"),
+    rationale: {
+      whyCorrect: [
+        "Lateral movement and credential abuse are ways attackers expand access to reach objectives (data, systems, privileges).",
+        "This is beyond initial compromise—this is operating inside the environment to achieve goals."
+      ],
+      keyClues: [
+        "Multiple network logons from the initial host",
+        "ADMIN$ and C$ usage",
+        "Remote execution tooling behavior"
+      ],
+      temptingButWrong: [
+        { phase: "Installation", note: "Installation is persistence on a host. This evidence shows expansion/movement and operational activity." },
+        { phase: "Command and Control", note: "C2 is the control channel. This is active internal movement and execution." }
+      ]
+    }
+  }
+];
+
+/* ===========================
+   State
+   =========================== */
+
+let state = {
+  mode: "practice",
+  currentScenarioId: 1,
+  attempts: {},        // scenarioId -> attempts count
+  answered: {},        // scenarioId -> { selected, correct, locked }
+  correctCount: 0
+};
+
+/* ===========================
+   Helpers
+   =========================== */
+
+const $ = (id) => document.getElementById(id);
+
+function init() {
+  // Build scenario dropdown
+  const sel = $("scenarioSel");
+  sel.innerHTML = "";
+  SCENARIOS.forEach(s => {
+    const opt = document.createElement("option");
+    opt.value = String(s.id);
+    opt.textContent = s.title;
+    sel.appendChild(opt);
+  });
+
+  // Build phases list
+  const list = $("phaseList");
+  list.innerHTML = "";
+  PHASES.forEach(p => {
+    const div = document.createElement("label");
+    div.className = "opt";
+    div.innerHTML = `
+      <input type="radio" name="phase" value="${escapeHtml(p.key)}" />
+      <div class="meta">
+        <div class="t">${escapeHtml(p.key)}</div>
+        <div class="d">${escapeHtml(p.desc)}</div>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+
+  // Load saved mode default
+  $("modeSel").value = state.mode;
+
+  // Wire events
+  $("scenarioSel").addEventListener("change", (e) => {
+    state.currentScenarioId = Number(e.target.value);
+    hideFeedback();
+    hideSummary();
+    renderScenario();
+    restoreSelectionUI();
+  });
+
+  $("modeSel").addEventListener("change", (e) => {
+    state.mode = e.target.value;
+    hideFeedback();
+    hideSummary();
+    renderHeaderStatus();
+    // In exam mode, lock feedback display immediately
+    renderScenario();
+  });
+
+  $("submitBtn").addEventListener("click", submitAnswer);
+  $("clearBtn").addEventListener("click", clearSelection);
+
+  $("resetBtn").addEventListener("click", () => {
+    if (!confirm("Reset all attempts and answers?")) return;
+    state.attempts = {};
+    state.answered = {};
+    state.correctCount = 0;
+    hideFeedback();
+    hideSummary();
+    clearSelection();
+    renderScenario();
+    renderHeaderStatus();
+  });
+
+  $("finishBtn").addEventListener("click", () => {
+    showSummary();
+  });
+
+  // Initial render
+  renderScenario();
+  renderHeaderStatus();
+  restoreSelectionUI();
+}
+
+function currentScenario() {
+  return SCENARIOS.find(s => s.id === state.currentScenarioId);
+}
+
+function attemptsFor(id){
+  return state.attempts[id] || 0;
+}
+
+function setAttempts(id, n){
+  state.attempts[id] = n;
+}
+
+function answeredFor(id){
+  return state.answered[id] || null;
+}
+
+function setAnswered(id, payload){
+  state.answered[id] = payload;
+}
+
+function answeredCount(){
+  return Object.keys(state.answered).length;
+}
+
+function escapeHtml(str){
+  return String(str)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function getSelectedPhase(){
+  const radios = document.querySelectorAll('input[name="phase"]');
+  for (const r of radios){
+    if (r.checked) return r.value;
+  }
+  return null;
+}
+
+function setSelectedPhase(val){
+  const radios = document.querySelectorAll('input[name="phase"]');
+  radios.forEach(r => r.checked = (r.value === val));
+}
+
+function disablePhaseSelection(disabled){
+  const radios = document.querySelectorAll('input[name="phase"]');
+  radios.forEach(r => r.disabled = disabled);
+}
+
+function disableButtons(disabled){
+  $("submitBtn").disabled = disabled;
+  $("clearBtn").disabled = disabled;
+  $("submitBtn").style.opacity = disabled ? "0.6" : "1";
+  $("clearBtn").style.opacity = disabled ? "0.6" : "1";
+}
+
+/* ===========================
+   Rendering
+   =========================== */
+
+function renderScenario(){
+  const s = currentScenario();
+  $("scenarioName").textContent = s.title;
+  $("evidenceType").textContent = s.evidenceType;
+  $("evidencePre").textContent = s.evidence;
+
+  const a = answeredFor(s.id);
+  const att = attemptsFor(s.id);
+  $("attemptTxt").textContent = `Attempt: ${att + 1}`;
+
+  // If already locked, reflect that
+  if (a && a.locked){
+    $("statusTxt").textContent = "Locked";
+    disablePhaseSelection(true);
+    disableButtons(true);
+
+    // Practice mode can still show feedback for previously answered items
+    if (state.mode === "practice"){
+      showFeedback(a.correct, a.selected, s.correct, s);
+    } else {
+      hideFeedback();
+    }
+  } else {
+    $("statusTxt").textContent = "In progress";
+    disablePhaseSelection(false);
+    disableButtons(false);
+    hideFeedback();
+  }
+
+  renderHeaderStatus();
+}
+
+function renderHeaderStatus(){
+  $("progressTxt").textContent = `${answeredCount()}/8`;
+  $("scoreTxt").textContent = `${state.correctCount}`;
+
+  if (answeredCount() === 0){
+    $("statusTxt").textContent = "Not started";
+  } else if (answeredCount() < 8){
+    // keep scenario-specific status if locked/in-progress; don't override harshly
+  } else {
+    $("statusTxt").textContent = "Complete";
+  }
+}
+
+function restoreSelectionUI(){
+  const s = currentScenario();
+  const a = answeredFor(s.id);
+  if (a){
+    setSelectedPhase(a.selected);
+    disablePhaseSelection(a.locked);
+    disableButtons(a.locked);
+  } else {
+    // if not answered, leave as-is (user may be switching scenarios mid-think)
+    disablePhaseSelection(false);
+    disableButtons(false);
+  }
+}
+
+/* ===========================
+   Feedback / Summary
+   =========================== */
+
+function hideFeedback(){
+  $("feedbackBox").classList.remove("show");
+}
+
+function showFeedback(isCorrect, selected, correct, scenario){
+  const box = $("feedbackBox");
+  const badge = $("fbBadge");
+  const phase = $("fbPhase");
+  const body = $("fbBody");
+
+  const selectedTxt = selected ? selected : "No selection";
+  const correctTxt = correct;
+
+  if (isCorrect){
+    badge.className = "badge good";
+    badge.textContent = "Correct";
+  } else {
+    badge.className = "badge bad";
+    badge.textContent = "Incorrect";
+  }
+
+  phase.className = "badge";
+  phase.innerHTML = `Your choice: <strong>${escapeHtml(selectedTxt)}</strong> &nbsp;|&nbsp; Correct: <strong>${escapeHtml(correctTxt)}</strong>`;
+
+  // Build rationale
+  const r = scenario.rationale;
+  let html = `
+    <div><strong>Why this phase fits:</strong></div>
+    <ul>
+      ${r.whyCorrect.map(x => `<li>${escapeHtml(x)}</li>`).join("")}
+    </ul>
+    <div style="height:6px"></div>
+    <div><strong>Key clues to notice:</strong></div>
+    <ul>
+      ${r.keyClues.map(x => `<li>${escapeHtml(x)}</li>`).join("")}
+    </ul>
+    <div style="height:6px"></div>
+    <div class="muted"><strong>Tempting, but wrong:</strong></div>
+    <ul>
+      ${r.temptingButWrong.map(x => `<li><span class="muted">${escapeHtml(x.phase)}:</span> ${escapeHtml(x.note)}</li>`).join("")}
+    </ul>
+  `;
+
+  body.innerHTML = html;
+  box.classList.add("show");
+}
+
+function hideSummary(){
+  $("summaryBox").classList.remove("show");
+}
+
+function showSummary(){
+  const totalAnswered = answeredCount();
+  const correct = state.correctCount;
+  const scoreStr = `${correct} / 8`;
+
+  $("finalScore").textContent = scoreStr;
+  $("finalAnswered").textContent = `${totalAnswered} / 8`;
+  $("finalCorrect").textContent = `${correct}`;
+  $("finalGuidance").textContent =
+    correct === 8 ? "Solid. Start mixing evidence types and add ‘confusable pair’ drills next."
+    : correct >= 6 ? "Good. Review the two you missed and identify the clue that would have changed your call."
+    : correct >= 4 ? "Developing. Focus on: Exploitation vs Installation, and C2 vs Actions on Objectives."
+    : "Reset and redo in Practice mode. Read the rationale after every submission.";
+
+  $("summaryBox").classList.add("show");
+
+  // In exam mode, reveal per-scenario feedback only AFTER finishing by switching to the current scenario’s feedback on demand
+  if (state.mode === "exam"){
+    // Optional: if current scenario is locked, we can show its rationale now (in a controlled way)
+    const s = currentScenario();
+    const a = answeredFor(s.id);
+    if (a && a.locked){
+      showFeedback(a.correct, a.selected, s.correct, s);
+    } else {
+      hideFeedback();
+    }
+  }
+}
+
+/* ===========================
+   Actions
+   =========================== */
+
+function clearSelection(){
+  const s = currentScenario();
+  const a = answeredFor(s.id);
+  if (a && a.locked) return; // cannot clear locked answers
+  const radios = document.querySelectorAll('input[name="phase"]');
+  radios.forEach(r => r.checked = false);
+}
+
+function submitAnswer(){
+  const s = currentScenario();
+  const existing = answeredFor(s.id);
+
+  // If already locked, ignore
+  if (existing && existing.locked) return;
+
+  const selected = getSelectedPhase();
+  if (!selected){
+    alert("Select a Kill Chain phase before submitting.");
+    return;
+  }
+
+  // Increment attempts
+  const att = attemptsFor(s.id) + 1;
+  setAttempts(s.id, att);
+
+  const isCorrect = (selected === s.correct);
+
+  // Lock on first submission (PBQ-like). You can change this behavior if you want multi-attempt practice.
+  const locked = true;
+
+  setAnswered(s.id, {
+    selected,
+    correct: isCorrect,
+    locked
+  });
+
+  // Score only on first lock
+  if (isCorrect){
+    state.correctCount += 1;
+  }
+
+  // Update UI state
+  $("attemptTxt").textContent = `Attempt: ${att}`;
+  disablePhaseSelection(true);
+  disableButtons(true);
+
+  // Feedback rules
+  if (state.mode === "practice"){
+    showFeedback(isCorrect, selected, s.correct, s);
+  } else {
+    hideFeedback();
+  }
+
+  renderHeaderStatus();
+}
+
+/* ===========================
+   Boot
+   =========================== */
+
+init();
+</script>
+</body>
+</html>

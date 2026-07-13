@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Logs Analysis Lab</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        
+        body {
+            background-color: #333;
+            color: #fff;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: #222;
+            padding: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav-button {
+            background-color: #444;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            margin-right: 5px;
+            cursor: pointer;
+        }
+        
+        .main-container {
+            background-color: #fff;
+            color: #000;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        
+        .instructions {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .tab-container {
+            margin-top: 20px;
+        }
+        
+        .tab-buttons {
+            display: flex;
+            margin-bottom: 0;
+        }
+        
+        .tab-button {
+            padding: 10px 20px;
+            background-color: #aaa;
+            cursor: pointer;
+            border: none;
+            margin-right: 2px;
+        }
+        
+        .tab-button.active {
+            background-color: #555;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+            background-color: #333;
+            color: #ddd;
+            padding: 20px;
+            font-family: monospace;
+            white-space: pre;
+            overflow-x: auto;
+            height: 300px;
+            overflow-y: auto;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .logs {
+            line-height: 1.5;
+        }
+        
+        .form-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .form-section {
+            width: 48%;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+        }
+        
+        .form-section h3 {
+            margin-bottom: 10px;
+        }
+        
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .checkbox-group {
+            margin-top: 10px;
+        }
+        
+        .checkbox-item {
+            margin-bottom: 8px;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 10px;
+            font-size: 0.8em;
+            color: #ccc;
+        }
+        
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .submit-button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 0 10px;
+        }
+        
+        .reset-button {
+            padding: 10px 20px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 0 10px;
+        }
+        
+        .result-area {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .page-counter {
+            text-align: center;
+            margin-top: 20px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <span>Cybersecurity Suspicous Login</span>
+    </header>
+    
+    <div class="main-container">
+        <div class="instructions">
+            <h2>INSTRUCTIONS</h2>
+            <p>Review information in each tab to select the source IP the analyst should be concerned about, the indicator of compromise, and the appropriate corrective actions.</p>
+        </div>
+        
+        <div class="tab-container">
+            <div class="tab-buttons">
+                <button class="tab-button active" onclick="openTab(event, 'sftp-log')">SFTP log</button>
+                <button class="tab-button" onclick="openTab(event, 'netstat')">Netstat</button>
+                <button class="tab-button" onclick="openTab(event, 'http-access')">HTTP access</button>
+            </div>
+            
+            <div id="sftp-log" class="tab-content active">
+                <div class="logs">2022-04-01 16:04:12 - GUI MODE - PROTOCOL SERVER-TO-CLIENT - [logged in] [IP = 192.168.10.32] [username = sjames]
+2022-04-01 16:04:33 - GUI MODE - PROTOCOL SERVER-TO-CLIENT - [directory = /var/www]
+2022-04-01 16:05:30 - GUI MODE - PROTOCOL SERVER-TO-CLIENT - [./about_us.html written]
+2022-04-01 16:09:20 - GUI MODE - PROTOCOL SERVER-TO-CLIENT - [logged out] [IP = 192.168.10.32] [username = sjames]
+2022-04-01 17:10:42 - GUI MODE - PROTOCOL SERVER-TO-CLIENT - [logged in] [IP = 192.168.10.37] [username = sjames]
+2022-04-01 17:11:30 - GUI MODE - PROTOCOL SERVER-TO-CLIENT - [directory = /var/www]
+2022-04-01 17:14:30 - GUI MODE - PROTOCOL SERVER-TO-CLIENT - [./index written]
+2022-04-01 17:15:44 - GUI MODE - PROTOCOL SERVER-TO-CLIENT - [logged out] [IP = 192.168.10.37] [username = sjames]
+2022-04-01 19:45:48 - GUI MODE - PROTOCOL SERVER-TO-CLIENT - [logged in] [IP = 32.111.16.37] [username = sjames]
+2022-04-01 19:45:58 - GUI MODE - PROTOCOL SERVER-TO-CLIENT - [logged out] [IP = 32.111.16.37] [username = sjames]
+2022-04-01 23:01:50 - GUI MODE - PROTOCOL SERVER-TO-CLIENT - [logged in] [IP = 41.21.18.102] [username = sjames]
+2022-04-01 23:01:54 - GUI MODE - PROTOCOL SERVER-TO-CLIENT - [directory = /var/www]
+2022-04-01 23:02:25 - GUI MODE - PROTOCOL SERVER-TO-CLIENT - [./index.html written]
+2022-04-01 23:03:18 - GUI MODE - PROTOCOL SERVER-TO-CLIENT - [logged out] [IP = 41.21.18.102] [username = sjames]
+2022-04-01 23:35:28 - GUI MODE - PROTOCOL SERVER-TO-CLIENT - [failed login] [IP = 32.111.16.37] [username = sjames]
+2022-04-02 09:10:42 - GUI MODE - PROTOCOL SERVER-TO-CLIENT - [logged in] [IP = 192.168.11.102] [username = sjames]
+2022-04-02 09:15:44 - GUI MODE - PROTOCOL SERVER-TO-CLIENT - [directory = /var/www]
+2022-04-02 09:22:55 - GUI MODE - PROTOCOL SERVER-TO-CLIENT - [./index written]
+2022-04-02 09:23:12 - GUI MODE - PROTOCOL SERVER-TO-CLIENT - [logged out] [IP = 192.168.11.102] [username = sjames]</div>
+            </div>
+            
+            <div id="netstat" class="tab-content">
+                <div class="logs">> netstat -ano
+TCP       0.0.0.0:22           0.0.0.0:0           LISTENING        1600
+TCP       127.0.0.1:1960       127.0.0.1:49722     ESTABLISHED      1000
+TCP       127.0.0.1:1960       127.0.0.1:49022     ESTABLISHED      1000
+TCP       127.0.0.1:49722      127.0.0.1:1960      ESTABLISHED      4912
+TCP       127.0.0.1:49800      127.0.0.1:1960      ESTABLISHED      4228
+TCP       127.0.0.1:49801      127.0.0.1:1961      ESTABLISHED      4228
+TCP       127.0.0.1:38666      41.21.18.102:22     ESTABLISHED      4940
+TCP       127.0.0.1:55356      192.168.10.32:22    ESTABLISHED      5112
+TCP       127.0.0.1:37654      192.168.10.37:22    ESTABLISHED      5104
+TCP       127.0.0.1:55357      32.111.16.37:22     TIME_WAIT        0
+TCP       127.0.0.1:52744      32.111.16.37:22     TIME_WAIT        0
+TCP       127.0.0.1:56751      32.111.16.37:22     TIME_WAIT        0
+TCP       127.0.0.1:39882      104.17.18.29:22     SYN_SENT         4992</div>
+            </div>
+            
+            <div id="http-access" class="tab-content">
+                <div class="logs">192.168.10.32  - "" - [2022-04-01 16:05:45 "GET https://mycompany.com/about_us.html" HTTP/1.1 200]
+192.168.10.37  - "" - [2022-04-01 17:15:20 "GET https://mycompany.com" HTTP/1.1 200]
+107.31.28.112  - "" - [2022-04-01 22:11:56 "GET https://mycompany.com" HTTP/1.1 200]
+63.11.108.122  - "" - [2022-04-01 22:22:58 "GET https://mycompany.com" HTTP/1.1 200]
+41.21.18.102   - "" - [2022-04-01 23:02:56 "GET https://mycompany.com" HTTP/1.1 200]
+32.111.16.37   - "" - [2022-04-01 23:34:01 "GET https://mycompany.com" HTTP/1.1 200]
+52.110.26.27   - "" - [2022-04-01 23:35:08 "GET https://mycompany.com/aboutUs.html" HTTP/1.1 404]
+52.110.26.27   - "" - [2022-04-01 23:35:18 "GET https://mycompany.com/aboutUs.html" HTTP/1.1 404]
+52.110.26.27   - "" - [2022-04-01 23:35:22 "GET https://mycompany.com/aboutUs.html" HTTP/1.1 404]
+192.168.11.102 - "" - [2022-04-02 09:23:02 "GET http://mycompany.com" HTTP/1.1 200]
+63.11.108.122  - "" - [2022-04-02 10:12:18 "GET https://mycompany.com" HTTP/1.1 200]
+63.11.108.122  - "" - [2022-04-02 10:12:28 "GET https://mycompany.com/about_us" HTTP/1.1 200]</div>
+            </div>
+        </div>
+        
+        <div class="form-container">
+            <div class="form-section">
+                <h3>Which source IP address should the analyst be most concerned about:</h3>
+                <select id="ip-select">
+                    <option value="">Select</option>
+                    <option value="41.21.18.102">41.21.18.102</option>
+                    <option value="192.168.11.102">192.168.11.102</option>
+                    <option value="192.168.10.37">192.168.10.37</option>
+                    <option value="52.110.26.27">52.110.26.27</option>
+                    <option value="192.168.10.32">192.168.10.32</option>
+                    <option value="32.111.16.37">32.111.16.37</option>
+                </select>
+                
+                <h3>Identify the indicator of compromise:</h3>
+                <select id="compromise-select">
+                    <option value="">Select</option>
+                    <option value="404 server error">404 server error</option>
+                    <option value="Modified index.html file">Modified index.html file</option>
+                    <option value="Unauthorized username">Unauthorized username</option>
+                    <option value="Modified about_us file">Modified about_us file</option>
+                    <option value="Repeated failed logins">Repeated failed logins</option>
+                </select>
+            </div>
+            
+            <div class="form-section">
+                <h3>Select the corrective actions:</h3>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="action1" value="Encrypt index.html">
+                        <label for="action1">Encrypt index.html.</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="action2" value="Change password">
+                        <label for="action2">Change the password on the sjames account.</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="action3" value="Block SFTP">
+                        <label for="action3">Block external sftp access.</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="action4" value="Shut down FTP">
+                        <label for="action4">Shut down the insecure file transfer server.</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="action5" value="Delete account">
+                        <label for="action5">Delete the sjames account.</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="action6" value="Deny IP">
+                        <label for="action6">Deny 192.168.*.* at firewall.</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <button class="submit-button" onclick="checkAnswers()">Submit</button>
+            <button class="reset-button" onclick="resetForm()">Reset</button>
+        </div>
+        
+        <div class="result-area" id="result-area">
+            <h3>Results:</h3>
+            <p id="result-message"></p>
+        </div>
+    </div>
+    
+    <!-- Footer and page counter removed as requested -->
+
+    
+    <script>
+        function openTab(evt, tabName) {
+            // Hide all tab content
+            var tabContent = document.getElementsByClassName("tab-content");
+            for (var i = 0; i < tabContent.length; i++) {
+                tabContent[i].className = tabContent[i].className.replace(" active", "");
+            }
+            
+            // Remove active class from all tab buttons
+            var tabButtons = document.getElementsByClassName("tab-button");
+            for (var i = 0; i < tabButtons.length; i++) {
+                tabButtons[i].className = tabButtons[i].className.replace(" active", "");
+            }
+            
+            // Show the current tab and add active class to the button
+            document.getElementById(tabName).className += " active";
+            evt.currentTarget.className += " active";
+        }
+        
+        function checkAnswers() {
+            var ipSelect = document.getElementById("ip-select").value;
+            var compromiseSelect = document.getElementById("compromise-select").value;
+            
+            // Count selected checkboxes
+            var checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+            var selectedActions = [];
+            checkboxes.forEach(function(checkbox) {
+                selectedActions.push(checkbox.value);
+            });
+            
+            var resultArea = document.getElementById("result-area");
+            var resultMessage = document.getElementById("result-message");
+            
+            // Check if all required fields are filled
+            if (ipSelect === "" || compromiseSelect === "" || selectedActions.length !== 2) {
+                resultMessage.innerHTML = "Please complete all fields. You must select an IP address, an indicator of compromise, and exactly two corrective actions.";
+                resultArea.style.display = "block";
+                resultArea.style.backgroundColor = "#ffdddd";
+                return;
+            }
+            
+            // Check if answers are correct (41.21.18.102, Modified index.html file, Change password, Block SFTP)
+            var isCorrect = (ipSelect === "41.21.18.102" && 
+                            compromiseSelect === "Modified index.html file" && 
+                            selectedActions.includes("Change password") && 
+                            selectedActions.includes("Block SFTP") &&
+                            selectedActions.length === 2);
+            
+            if (isCorrect) {
+                resultMessage.innerHTML = "Correct! You've identified the suspicious IP (41.21.18.102) which modified the index.html file. The appropriate corrective actions are to change the password on the sjames account and block external SFTP access to prevent further unauthorized access.";
+                resultArea.style.backgroundColor = "#ddffdd";
+            } else {
+                resultMessage.innerHTML = "Incorrect. Please review the logs carefully and try again. Look for suspicious patterns in the SFTP logs, connections in netstat, and HTTP access patterns.";
+                resultArea.style.backgroundColor = "#ffdddd";
+            }
+            
+            resultArea.style.display = "block";
+        }
+        
+        function resetForm() {
+            document.getElementById("ip-select").value = "";
+            document.getElementById("compromise-select").value = "";
+            
+            var checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(function(checkbox) {
+                checkbox.checked = false;
+            });
+            
+            document.getElementById("result-area").style.display = "none";
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Security Incident Ticket Analysis</title>
+
+<style>
+:root {
+  --bg:#0b1220; --card:#121a2b; --muted:#93a4c7;
+  --text:#e8efff; --accent:#3aa0ff; --bad:#ff4d6d;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  background:linear-gradient(180deg,#07101f,#0b1220);
+  color:var(--text);
+}
+header{
+  padding:18px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+h1{margin:0;font-size:18px}
+.sub{font-size:13px;color:var(--muted)}
+main{padding:18px;max-width:1100px;margin:auto}
+.grid{display:grid;gap:14px;grid-template-columns:1.1fr .9fr}
+.card{
+  background:rgba(18,26,43,.9);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;
+  padding:14px;
+}
+.kv{display:grid;grid-template-columns:140px 1fr;gap:8px;font-size:13px}
+.k{color:var(--muted)}
+pre{
+  margin-top:10px;padding:12px;background:#0a1020;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;font-size:12px;
+}
+label{display:block;margin-top:10px;font-size:13px;color:var(--muted)}
+select,button{
+  width:100%;padding:10px;border-radius:12px;
+  border:1px solid rgba(255,255,255,.12);
+  background:#0a1020;color:var(--text)
+}
+button{
+  margin-top:12px;background:var(--accent);
+  border:none;color:#06101f;font-weight:700;cursor:pointer
+}
+.feedback{display:none;margin-top:12px;padding:12px;border-radius:12px}
+.ok{border:1px solid rgba(58,160,255,.6)}
+.no{border:1px solid rgba(255,77,109,.6)}
+.footer{margin-top:10px;font-size:12px;color:var(--muted)}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+
+<body>
+<header>
+  <h1>Security Incident Ticket Analysis</h1>
+  <div class="sub">Scenario-based analyst triage and resolution workflow</div>
+</header>
+
+<main>
+<div class="grid">
+
+<!-- LEFT -->
+<section class="card">
+  <h2>Ticket</h2>
+  <div id="ticketDetails" class="kv"></div>
+
+  <h2 style="margin-top:14px;">Evidence</h2>
+  <pre id="logPane"></pre>
+
+  <div class="footer">Think like an analyst: identify → analyze → contain</div>
+</section>
+
+<!-- RIGHT -->
+<section class="card">
+  <h2>Analyst Response</h2>
+
+  <label>1) Incident classification</label>
+  <select id="q1">
+    <option value="">Select…</option>
+    <option value="bruteforce">Credential / brute force attack</option>
+    <option value="malware">Malware infection</option>
+    <option value="exfil">Data exfiltration attempt</option>
+    <option value="vuln">Vulnerability exploitation</option>
+    <option value="benign">Benign / misconfiguration</option>
+  </select>
+
+  <label>2) BEST next analyst step</label>
+  <select id="q2">
+    <option value="">Select…</option>
+    <option value="analyze">Validate logs and determine scope</option>
+    <option value="isolate">Isolate affected host</option>
+    <option value="block">Block source / update controls</option>
+    <option value="patch">Patch affected system</option>
+  </select>
+
+  <label>3) BEST immediate containment / resolution</label>
+  <select id="q3">
+    <option value="">Select…</option>
+    <option value="block">Block malicious IP / domain</option>
+    <option value="disable">Disable compromised account</option>
+    <option value="remove">Remove malware</option>
+    <option value="patch">Apply security patch</option>
+  </select>
+
+  <button onclick="grade()">Submit</button>
+  <button onclick="nextTicket()" style="margin-top:6px;background:#1b2b4f;color:#e8efff">Next Ticket</button>
+
+  <div id="feedback" class="feedback"></div>
+</section>
+
+</div>
+</main>
+
+<script>
+let current = 0;
+
+const TICKETS = [
+{
+  id:"INC-101",
+  reporter:"Jane R. (Accounting)",
+  asset:"ACCT-LT-22",
+  impact:"Repeated sign-in prompts and slow system",
+  time:"08:14",
+  context:"External access detected",
+  logs:`EventID 4625 – Failed logon
+Source IP: 203.0.113.77
+Logon Type: 3
+Repeated failures across 3 minutes`,
+  answers:{q1:"bruteforce",q2:"analyze",q3:"block"},
+  explain:"Multiple failed logons from one external IP indicate a credential attack. Validate scope, then block the source."
+},
+{
+  id:"INC-102",
+  reporter:"Mark L. (HR)",
+  asset:"HR-LT-09",
+  impact:"Antivirus alert after email opened",
+  time:"10:02",
+  context:"User opened invoice attachment",
+  logs:`Email attachment: invoice.exe
+AV Alert: Suspicious process spawned
+Outbound connection established`,
+  answers:{q1:"malware",q2:"isolate",q3:"remove"},
+  explain:"Executable attachment indicates phishing malware. Isolate host to prevent spread, then remove malware."
+},
+{
+  id:"INC-103",
+  reporter:"SOC Monitoring",
+  asset:"WEB-SRV-02",
+  impact:"Unusual outbound traffic detected",
+  time:"13:47",
+  context:"Server is internet-facing",
+  logs:`IDS Alert: Repeated outbound traffic
+Destination IP: 185.92.44.18
+Port: 8080
+Interval: every 60 seconds`,
+  answers:{q1:"exfil",q2:"analyze",q3:"block"},
+  explain:"Beaconing-style outbound traffic suggests exfiltration or C2. Validate then block destination."
+},
+{
+  id:"INC-104",
+  reporter:"Vulnerability Scanner",
+  asset:"VPN-GW-01",
+  impact:"Critical vulnerability identified",
+  time:"16:20",
+  context:"System is internet-facing",
+  logs:`CVSS 3.1: AV:N/AC:L/PR:N/UI:N/C:H/I:H/A:H
+Known exploit available`,
+  answers:{q1:"vuln",q2:"patch",q3:"patch"},
+  explain:"Network exploitable, no auth, high impact. Patch immediately."
+}
+];
+
+function loadTicket(){
+  const t=TICKETS[current];
+  document.getElementById("ticketDetails").innerHTML=`
+    <div class="k">Ticket ID</div><div>${t.id}</div>
+    <div class="k">Reported by</div><div>${t.reporter}</div>
+    <div class="k">Asset</div><div>${t.asset}</div>
+    <div class="k">Impact</div><div>${t.impact}</div>
+    <div class="k">Time</div><div>${t.time}</div>
+    <div class="k">Context</div><div>${t.context}</div>
+  `;
+  document.getElementById("logPane").textContent=t.logs;
+  document.getElementById("feedback").style.display="none";
+  document.querySelectorAll("select").forEach(s=>s.value="");
+}
+
+function grade(){
+  const t=TICKETS[current];
+  let score=0;
+  if(q1.value===t.answers.q1) score++;
+  if(q2.value===t.answers.q2) score++;
+  if(q3.value===t.answers.q3) score++;
+
+  const fb=document.getElementById("feedback");
+  fb.style.display="block";
+  fb.className="feedback "+(score===3?"ok":"no");
+  fb.innerHTML=`<strong>Score: ${score}/3</strong><br>${t.explain}`;
+}
+
+function nextTicket(){
+  current=(current+1)%TICKETS.length;
+  loadTicket();
+}
+
+loadTicket();
+</script>
+</body>
+</html>

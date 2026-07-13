@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CompTIA CySA+ Lab: Malicious Behavior Analysis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+        }
+        
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            min-height: 100vh;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        header {
+            background-color: #2d2d2d;
+            color: white;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        
+        .menu-icon {
+            margin-right: 15px;
+            cursor: pointer;
+        }
+        
+        .tab-bar {
+            display: flex;
+            align-items: center;
+            background-color: #2d2d2d;
+            color: white;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .tab {
+            padding: 5px 15px;
+            margin-right: 5px;
+            background-color: #1a1a1a;
+            border-radius: 5px 5px 0 0;
+            cursor: pointer;
+        }
+        
+        .tab.active {
+            background-color: #4285f4;
+        }
+        
+        .toolbar {
+            display: flex;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .toolbar-item {
+            margin-right: 15px;
+            cursor: pointer;
+        }
+        
+        .content {
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .instructions {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .tab-content {
+            display: none;
+            background-color: #2d2d2d;
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .tab-navigation {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        
+        .tab-nav-item {
+            padding: 5px 15px;
+            background-color: #f0f0f0;
+            margin-right: 5px;
+            cursor: pointer;
+            border: 1px solid #ddd;
+        }
+        
+        .tab-nav-item.active {
+            background-color: #4285f4;
+            color: white;
+        }
+        
+        .form-section {
+            display: flex;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        
+        .form-column {
+            flex: 1;
+            padding: 10px;
+        }
+        
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+        }
+        
+        .radio-group {
+            margin-top: 10px;
+        }
+        
+        .radio-option {
+            margin-bottom: 8px;
+        }
+        
+        .submit-btn {
+            padding: 10px 20px;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        .submit-btn:hover {
+            background-color: #3367d6;
+        }
+        
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 15px;
+            background-color: #f9f9f9;
+            border-top: 1px solid #e0e0e0;
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .answer-section {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        
+        .answer-heading {
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+        
+        .tab-title {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 10px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <header>
+        </header>
+        
+        <div class="content">
+            <div class="instructions">
+                <h2>INSTRUCTIONS</h2>
+            </div>
+            
+            <p class="intro-text"></p>
+            
+            <div class="lab-instructions" style="color: blueviolet;">
+                <p>Select the command that generated the output in tabs 1 and 2.</p>
+                <p>Review the output text in all tabs and identify the file responsible for the malicious behavior.</p>
+            </div>
+            
+            <div class="tab-navigation">
+                <div class="tab-nav-item active" onclick="showTab(1)">1</div>
+                <div class="tab-nav-item" onclick="showTab(2)">2</div>
+                <div class="tab-nav-item" onclick="showTab(3)">3</div>
+                <div class="tab-nav-item" onclick="showTab(4)">4</div>
+            </div>
+            
+            <!-- Tab 1 Content -->
+            <div id="tab1" class="tab-content active">Active   Connections
+
+Proto  Local Address         Foreign Address       State           PID
+TCP    0.0.0.0:135           0.0.0.0:0             LISTENING       820
+TCP    0.0.0.0:445           0.0.0.0:0             LISTENING       4
+TCP    0.0.0.0:1025          0.0.0.0:0             LISTENING       1148
+TCP    0.0.0.0:1026          0.0.0.0:0             LISTENING       556
+TCP    0.0.0.0:1030          0.0.0.0:0             LISTENING       1536
+TCP    127.0.0.1:1049        127.0.0.1:27015       ESTABLISHED     2901
+TCP    192.168.10.31:49664   47.31.32.101:80       ESTABLISHED     1916
+TCP    192.168.10.31:49667   64.202.167.45:https   ESTABLISHED     2677
+TCP    192.168.10.31:49668   64.202.167.45:https   ESTABLISHED     2677
+TCP    192.168.10.31:50036   31.13.104.7:https     ESTABLISHED     3407
+TCP    192.168.10.31:50541   192.168.10.27:https   ESTABLISHED     1782
+TCP    192.168.10.31:50547   192.168.10.27:http    ESTABLISHED     8
+TCP    192.168.10.31:50751   174.129.25.170:http   TIME_WAIT       0
+TCP    192.168.10.31:50752   50.17.92.37:http      TIME_WAIT       0</div>
+            
+            <!-- Tab 2 Content -->
+            <div id="tab2" class="tab-content">Image Name                     PID Session Name        Session#    Mem Usage
+========================= ======== ================ =========== ============
+System Idle Process              0 Services                   0          24 K
+System                           4 Services                   0       4,276 K
+smss.exe                       544 Services                   0         352 K
+csrss.exe                      608 Services                   0       3,440 K
+wininit.exe                    660 Services                   0         660 K
+csrss.exe                      672 Console                    1       6,736 K
+services.exe                   724 Services                   0       5,512 K
+lsass.exe                      732 Services                   0      11,492 K
+lsm.exe                        740 Services                   0       3,052 K
+svchost.exe                    820 Services                   0       6,936 K
+svchost.exe                    888 Services                   0       7,644 K
+svchost.exe                   1056 Services                   0      15,756 K
+svchost.exe                   1148 Services                   0       4,532 K
+svchost.exe                   1184 Services                   0      11,276 K
+spoolsv.exe                   1332 Services                   0       5,756 K
+svchost.exe                   1360 Services                   0       7,780 K
+taskhost.exe                  1536 Console                    1       4,872 K
+dwm.exe                       1556 Console                    1      35,900 K
+explorer.exe                  1576 Console                    1      26,964 K
+cmd.exe                       1916 Console                    1       2,656 K
+conhost.exe                    496 Console                    1       5,804 K
+TrustedInstaller.exe          2404 Services                   0       5,048 K
+sppsvc.exe                    2508 Services                   0       3,756 K
+SearchIndexer.exe             2608 Services                   0      12,468 K
+wmpnetwk.exe                  2724 Services                   0       4,580 K
+taskeng.exe                   2856 Services                   0       3,756 K
+taskeng.exe                   2892 Console                    1       4,128 K
+calc.exe                      2901 Console                    1       2,400 K
+WmiPrvSE.exe                  3108 Services                   0       4,772 K
+WUDFHost.exe                  3164 Services                   0       2,844 K
+chrome.exe                    3407 Console                    1      51,200 K
+chrome.exe                    2564 Console                    1      10,996 K
+chrome.exe                    3360 Console                    1      13,812 K
+svchost.exe                   2904 Services                   0       5,120 K
+cmd.exe                       2677 Console                    1       3,064 K
+conhost.exe                   1782 Console                    1       5,808 K</div>
+            
+            <!-- Tab 3 Content -->
+            <div id="tab3" class="tab-content">Image Name                  PID    Sessions ID    CPU    Next Thread
+======================= ====== ============ ====== ===========
+cmd.exe                   3147      Console       0    14,400 K
+calc.exe                  2901      Console       0       517 K
+explorer.exe              1576      Console       0     1,356 K
+chrome.exe                3407      Console       3    27,092 K
+cmd.exe                   2677      Console       0       516 K
+conhost.exe               1782      Console       0       184 K</div>
+            
+            <!-- Tab 4 Content -->
+            <div id="tab4" class="tab-content">The Baseline hash (signature sha)
+
+Hash                                File
+================================== ===========
+1cb65132f9a89a763e1c14414419e56bc  calc.exe
+410d94d38924284b93c1a7fa7d8c1c04e  explorer.exe
+910d3e2fa9b2113be7b9281d14991c67a  explorer.daz
+4d6a7c56a2c0f35c9a51d5b9c67c1cf7a  chrome.exe
+369615f75ae31c4b9c6841529a6c6110e  conhost.exe
+19eb11f7dee7103edf5efe5482e56c10a  sftd.exe</div>
+            
+            <div class="form-section">
+                <div class="form-column">
+                    <label for="command1" style="color: red; font-weight: bold;">Select the command that generated the output in tab 1:</label>
+                    <select id="command1" style="border: 2px solid red; color: red; font-weight: bold;">
+                        <option value="">Select command</option>
+                        <option value="netstat -bo">netstat -bo</option>
+                        <option value="tasklist">tasklist</option>
+                        <option value="dir -a">dir -a</option>
+                        <option value="ipconfig /reset">ipconfig /reset</option>
+                        <option value="taskkill /f1">taskkill /f1</option>
+                    </select>
+                    
+                    <label for="command2" style="margin-top: 20px; color: red; font-weight: bold;">Select the command that generated the output in tab 2:</label>
+                    <select id="command2" style="border: 2px solid red; color: red; font-weight: bold;">
+                        <option value="">Select command</option>
+                        <option value="netstat -bo">netstat -bo</option>
+                        <option value="tasklist">tasklist</option>
+                        <option value="get proc">get proc</option>
+                        <option value="ps -a">ps -a</option>
+                        <option value="taskkill /f1">taskkill /f1</option>
+                    </select>
+                </div>
+                
+                <div class="form-column">
+                    <p style="color: red; font-weight: bold;">Identify the file responsible for the malicious behavior:</p>
+                    <div class="radio-group" style="color: red; font-weight: bold;">
+                        <div class="radio-option">
+                            <input type="radio" id="calendar" name="malicious-file" value="calendar.dat">
+                            <label for="calendar">calendar.dat</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="cmd" name="malicious-file" value="cmd.exe">
+                            <label for="cmd">cmd.exe</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="sftp" name="malicious-file" value="sftp.exe">
+                            <label for="sftp">sftp.exe</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="calc" name="malicious-file" value="calc.exe">
+                            <label for="calc">calc.exe</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="explorer" name="malicious-file" value="explorer.exe">
+                            <label for="explorer">explorer.exe</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="users" name="malicious-file" value="users.txt">
+                            <label for="users">users.txt</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="submitBtn" class="submit-btn">Submit Answers</button>
+            <button id="resetBtn" class="submit-btn" style="background-color: #f44336; margin-left: 10px;">Reset All</button>
+            
+            <div id="answerSection" class="answer-section hidden">
+                <h3 class="answer-heading">Answer:</h3>
+                <p>Select the command that generated the output in tab 1:<br>
+                netstat -bo</p>
+                <p>Select the command that generated the output in tab 2:<br>
+                tasklist</p>
+                <p>Identify the file responsible for the malicious behavior:<br>
+                cmd.exe</p>
+                <p>Select the command that generated the output in tab 1: The output in tab 1 displays active network connections, which can be generated using the netstat command with options to display the owning process ID.</p>
+                <p>Select the command that generated the output in tab 2: The output in tab 2 lists the running processes with their PIDs and memory usage, which can be generated using the tasklist command.</p>
+                <p>Identify the file responsible for the malicious behavior: To identify the malicious file, we compare the hashes of the current files against the baseline hashes. From the provided data:</p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>We see suspicious network connections in tab 1</li>
+                    <li>In tab 2, we see two instances of cmd.exe (PIDs 1916 and 2677) which is unusual</li>
+                    <li>Tab 3 confirms these cmd.exe processes are running with unusual privileges</li>
+                    <li>Tab 4 shows baseline hashes, but cmd.exe is not in the baseline, indicating it may be malicious</li>
+                </ul>
+            </div>
+            
+            <div class="status-bar">
+                <div></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Tab switching functionality
+        function showTab(tabNumber) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(tab => tab.classList.remove('active'));
+            
+            // Show selected tab content
+            document.getElementById('tab' + tabNumber).classList.add('active');
+            
+            // Update tab navigation active state
+            const tabNavItems = document.querySelectorAll('.tab-nav-item');
+            tabNavItems.forEach(item => item.classList.remove('active'));
+            tabNavItems[tabNumber - 1].classList.add('active');
+        }
+        
+        // Submit button functionality
+        document.getElementById('submitBtn').addEventListener('click', function() {
+            const command1 = document.getElementById('command1').value;
+            const command2 = document.getElementById('command2').value;
+            const maliciousFile = document.querySelector('input[name="malicious-file"]:checked');
+            
+            if (!command1 || !command2 || !maliciousFile) {
+                alert('Please complete all selections before submitting.');
+                return;
+            }
+            
+            // Show answer section
+            document.getElementById('answerSection').classList.remove('hidden');
+            
+            // Check answers
+            if (command1 === 'netstat -bo' && command2 === 'tasklist' && maliciousFile.value === 'cmd.exe') {
+                alert('Congratulations! Your answers are correct.');
+            } else {
+                alert('Some answers are incorrect. Review the correct answers below.');
+            }
+            
+            // Scroll to answer section
+            document.getElementById('answerSection').scrollIntoView({ behavior: 'smooth' });
+        });
+        
+        // Reset button functionality
+        document.getElementById('resetBtn').addEventListener('click', function() {
+            document.getElementById('command1').value = '';
+            document.getElementById('command2').value = '';
+            const radioButtons = document.querySelectorAll('input[name="malicious-file"]');
+            radioButtons.forEach(radio => radio.checked = false);
+            document.getElementById('answerSection').classList.add('hidden');
+        });
+    </script>
+</body>
+</html>

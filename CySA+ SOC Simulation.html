@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SecOps Horizon — Tier 1 SOC Analyst Induction Portal</title>
+  <style>
+    :root {
+      --bg: #070a13;
+      --panel: #0d1527;
+      --panel-hdr: #121d36;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-focus: #58a6ff;
+      --ink: #e6edf3;
+      --muted: #8b9bb4;
+      --accent: #58a6ff;
+      --success: #34d399;
+      --danger: #f87171;
+      --warning: #fbbf24;
+      --chip-bg: #16223f;
+      --terminal-bg: #04060b;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background-color: var(--bg);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: linear-gradient(180deg, var(--panel-hdr), var(--panel));
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .branding h1 { margin: 0; font-size: 18px; font-weight: 700; color: #fff; }
+    .branding p { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+
+    .global-metrics { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .metric-badge { background: rgba(0, 0, 0, 0.3); border: 1px solid var(--border); padding: 6px 12px; border-radius: 8px; font-size: 12px; color: var(--muted); }
+    .metric-badge strong { font-family: var(--mono); margin-left: 4px; }
+
+    .pipeline-nav { background-color: rgba(0, 0, 0, 0.2); border-bottom: 1px solid var(--border); padding: 8px 24px; }
+    .pipeline-track { max-width: 1600px; margin: 0 auto; display: flex; justify-content: space-between; gap: 8px; overflow-x: auto; }
+    
+    .pipeline-step {
+      flex: 1; min-width: 150px; background: transparent; border: 1px solid transparent;
+      padding: 10px 14px; border-radius: 8px; text-align: left; cursor: pointer; color: var(--muted);
+      display: flex; align-items: center; gap: 10px; font-size: 13px;
+    }
+
+    .pipeline-step .step-num {
+      width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 11px;
+    }
+
+    .pipeline-step.active { background-color: var(--chip-bg); border-color: var(--border-focus); color: #fff; }
+    .pipeline-step.active .step-num { border-color: var(--accent); background-color: var(--accent); color: var(--bg); }
+    .pipeline-step.completed { color: var(--success); }
+    .pipeline-step.completed .step-num { border-color: var(--success); background-color: rgba(52, 211, 153, 0.1); }
+
+    main { max-width: 1600px; width: 100%; margin: 0 auto; padding: 24px; flex-grow: 1; display: grid; grid-template-columns: 1fr 420px; gap: 24px; }
+    @media(max-width: 1200px) { main { grid-template-columns: 1fr; } }
+
+    .workspace-panel { display: flex; flex-direction: column; gap: 24px; }
+    .card { background-color: var(--panel); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); overflow: hidden; }
+    .card-header { background-color: var(--panel-hdr); padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .card-header h2 { margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); }
+    .card-body { padding: 20px; }
+
+    .btn { background-color: var(--chip-bg); color: var(--ink); border: 1px solid var(--border); padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; }
+    .btn:hover:not(:disabled) { border-color: #485875; background-color: rgba(255,255,255,0.02); }
+    .btn.primary { background-color: rgba(88, 166, 255, 0.15); border-color: rgba(88, 166, 255, 0.4); color: var(--accent); }
+    .btn.primary:hover:not(:disabled) { background-color: rgba(88, 166, 255, 0.25); border-color: var(--accent); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    select, textarea { width: 100%; background-color: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; color: var(--ink); padding: 10px 12px; font-size: 13px; outline: none; }
+    select:focus, textarea:focus { border-color: var(--border-focus); }
+    label { display: block; margin-bottom: 6px; font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-group { margin-bottom: 18px; }
+
+    .table-wrapper { overflow-x: auto; margin-top: 12px; border-radius: 8px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+    th { background-color: var(--panel-hdr); padding: 12px 16px; font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--border); }
+    td { padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tr.selected { background-color: rgba(88,166,255,0.08); border-left: 3px solid var(--accent); }
+    tr.clickable { cursor: pointer; }
+    tr.clickable:hover { background-color: rgba(255,255,255,0.02); }
+
+    .badge { display: inline-flex; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; font-family: var(--mono); text-transform: uppercase; border: 1px solid transparent; }
+    .badge.info { background: rgba(88,166,255,0.1); border-color: rgba(88,166,255,0.3); color: var(--accent); }
+    .badge.danger { background: rgba(248,113,113,0.1); border-color: rgba(248,113,113,0.3); color: var(--danger); }
+    .badge.success { background: rgba(52,211,153,0.1); border-color: rgba(52,211,153,0.3); color: var(--success); }
+    .badge.warning { background: rgba(251,191,36,0.1); border-color: rgba(251,191,36,0.3); color: var(--warning); }
+
+    pre { margin: 0; font-family: var(--mono); font-size: 12px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; color: #adbac7; }
+    .terminal-view { background-color: var(--terminal-bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px; min-height: 100px; }
+
+    .siem-tabs { display: flex; gap: 6px; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    .siem-tab { background: transparent; border: none; color: var(--muted); padding: 8px 16px; cursor: pointer; font-size: 13px; font-weight: 600; border-radius: 6px; }
+    .siem-tab.active { background-color: var(--chip-bg); color: #fff; border: 1px solid var(--border); }
+
+    .feedback-box { padding: 16px; border-radius: 8px; border: 1px solid var(--border); margin-top: 14px; display: none; }
+    .feedback-box.show { display: block; }
+
+    .modal-overlay { position: fixed; inset: 0; background-color: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 24px; backdrop-filter: blur(4px); }
+    .modal-overlay.show { display: flex; }
+    .modal-window { background-color: var(--panel); border: 1px solid rgba(255,255,255,0.15); width: min(1000px, 100%); max-height: 85vh; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 24px 48px rgba(0,0,0,0.6); }
+
+    /* Simulated AI Video Terminal Layout components */
+    .video-frame { background-color: #040711; border: 1px solid rgba(88, 166, 255, 0.2); border-radius: 12px; height: 260px; position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center; margin-bottom: 16px; }
+    .video-overlay-text { position: absolute; top: 12px; left: 12px; font-family: var(--mono); font-size: 11px; color: var(--accent); text-transform: uppercase; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05); }
+    .video-placeholder-graphic { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; color: var(--muted); }
+    .audio-wave { display: flex; align-items: flex-end; gap: 3px; height: 30px; margin-top: 8px; }
+    .wave-bar { width: 3px; background-color: var(--accent); border-radius: 3px; animation: bounce 1s infinite alternate; }
+    .wave-bar:nth-child(2) { animation-delay: 0.2s; height: 15px; }
+    .wave-bar:nth-child(3) { animation-delay: 0.4s; height: 25px; }
+    .wave-bar:nth-child(4) { animation-delay: 0.1s; height: 10px; }
+    .wave-bar:nth-child(5) { animation-delay: 0.3s; height: 20px; }
+
+    @keyframes bounce { 0% { transform: scaleY(0.3); } 100% { transform: scaleY(1.1); } }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-container">
+      <div class="branding">
+        <h1>SecOps Horizon — Incident Response Center</h1>
+        <p>CySA+ Analyst Shift Induction Environment</p>
+      </div>
+      <div class="global-metrics">
+        <div class="metric-badge" style="border-color: rgba(88, 166, 255, 0.4);">Triage Rating: <strong id="stat-triage" style="color: var(--accent);">0%</strong></div>
+        <div class="metric-badge" style="border-color: rgba(251, 191, 36, 0.4);">Analysis Depth: <strong id="stat-analysis" style="color: var(--warning);">0 / 40</strong></div>
+        <div class="metric-badge" style="border-color: rgba(52, 211, 153, 0.4);">Containment Score: <strong id="stat-containment" style="color: var(--success);">0 / 40</strong></div>
+        <div class="metric-badge">Incident Clock: <strong id="global-timer" style="color:#fff;">30:00</strong></div>
+        <button class="btn primary" id="btn-master-submit" onclick="showMasterSummary()">Finalize Incident Case File</button>
+      </div>
+    </div>
+    <div class="pipeline-nav">
+      <div class="pipeline-track">
+        <button class="pipeline-step active" id="step-0" onclick="switchPhase(0)">
+          <div class="step-num">0</div> <span>Briefing Room</span>
+        </button>
+        <button class="pipeline-step" id="step-1" onclick="switchPhase(1)">
+          <div class="step-num">1</div> <span>Alert Triage</span>
+        </button>
+        <button class="pipeline-step" id="step-2" onclick="switchPhase(2)">
+          <div class="step-num">2</div> <span>Ticket Intake</span>
+        </button>
+        <button class="pipeline-step" id="step-3" onclick="switchPhase(3)">
+          <div class="step-num">3</div> <span>SIEM Timeline</span>
+        </button>
+        <button class="pipeline-step" id="step-4" onclick="switchPhase(4)">
+          <div class="step-num">4</div> <span>Packet Analysis</span>
+        </button>
+        <button class="pipeline-step" id="step-5" onclick="switchPhase(5)">
+          <div class="step-num">5</div> <span>Root Cause Wrap-up</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="workspace-panel">
+
+      <section class="card phase-view" id="view-0">
+        <div class="card-header">
+          <h2>Shift Briefing Room — Welcome to your First Operational Investigation</h2>
+          <span class="badge info">Induction State: Active</span>
+        </div>
+        <div class="card-body">
+          <h3 style="margin-top: 0; font-size: 15px; color:#fff;">Your Role Profile: Tier 1 Security Operations Center (SOC) Analyst</h3>
+          <p style="color: var(--muted); margin-bottom: 20px;">
+            Welcome to your first active operational assignment. In Security+, you learned the vocabulary of cybersecurity—you memorized the names of protocols and types of malware. In CySA+, you step into the shoes of an active defender. Your job is to parse alerts, trace threat actors across network layers, and execute containment actions to limit business damage.
+          </p>
+
+          <div class="video-frame">
+            <div class="video-overlay-text">🔴 Secure Transmission — Video Briefing Intercept</div>
+            <div class="video-placeholder-graphic" id="video-ui-playback">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" />
+              </svg>
+              <div style="font-size: 13px; font-weight: bold; color: #fff;">SOC Supervisor: Sarah Jenkins (Incident Commander)</div>
+              <button class="btn primary" style="padding: 6px 14px; font-size: 12px;" onclick="simulateVideoPlayback()">▶ Click to Play Incident Briefing</button>
+            </div>
+          </div>
+
+          <div class="terminal-view" id="briefing-transcript-panel" style="border-color: rgba(88, 166, 255, 0.15);">
+            <pre style="color: var(--muted); font-style: italic;">[Console] Standby. Click the play button on the video module above to stream the security supervisor dispatch narrative parameters into the terminal viewport stream panel...</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="card phase-view hidden" id="view-1">
+        <div class="card-header">
+          <h2>Real-Time Ingestion Alarm Matrix</h2>
+          <span class="badge danger">Queue Status: Unresolved Alerts</span>
+        </div>
+        <div class="card-body">
+          <p class="sub" style="color: var(--muted); margin-top: 0; margin-bottom: 16px;">
+            <strong>The Scenario Step:</strong> Your monitors just pinged. You have 4 raw logs crashing into your queue. Real security work means filtering out baseline system noise to find the true signature of an adversary. Select each row to dump the technical telemetry—find the true malicious threat chain.
+          </p>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr><th>Alert ID</th><th>Sensor Origin</th><th>Trigger Definition Signature</th><th>Risk Rating</th></tr>
+              </thead>
+              <tbody>
+                <tr class="clickable" onclick="selectTriageAlert(0, this)">
+                  <td><span class="badge info">ALT-2219</span></td>
+                  <td>Host EDR Monitor</td>
+                  <td>Suspicious application inheritance loop: <code>explorer.exe -> winword.exe -> powershell.exe</code></td>
+                  <td><span class="badge danger">High</span></td>
+                </tr>
+                <tr class="clickable" onclick="selectTriageAlert(1, this)">
+                  <td><span class="badge info">ALT-9081</span></td>
+                  <td>Perimeter Firewall</td>
+                  <td>Automated background sync connection request to: <code>updates.microsoft.com</code></td>
+                  <td><span class="badge success">Low</span></td>
+                </tr>
+                <tr class="clickable" onclick="selectTriageAlert(2, this)">
+                  <td><span class="badge info">ALT-4412</span></td>
+                  <td>Windows Event Log</td>
+                  <td>Event ID 4698: Local deployment update task executed by system manager engine</td>
+                  <td><span class="badge warning">Medium</span></td>
+                </tr>
+                <tr class="clickable" onclick="selectTriageAlert(3, this)">
+                  <td><span class="badge info">ALT-5567</span></td>
+                  <td>NIDS Edge Sensor</td>
+                  <td>Inbound ping packet scan crossing public subnet zone boundary map parameters</td>
+                  <td><span class="badge success">Low</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="terminal-view" style="margin-top: 18px;" id="triage-pane-details">
+            <pre style="color: var(--muted);">[System] Select an alert index row from the tracking console above to inspect its raw server parameters dump...</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="card phase-view hidden" id="view-2">
+        <div class="card-header">
+          <h2>Escalated Incident Tracking Ticket</h2>
+          <span class="badge warning">Operational Status: Open Ticket</span>
+        </div>
+        <div class="card-body">
+          <p style="margin-top:0; color: var(--muted);">
+            <strong>The Scenario Step:</strong> Great job isolating the alert. Now that the true alarm has been flagged, a formal high-priority ticketing record has been spun up in your dashboard. Study the fields below to see exactly which production asset has been targeted and who the victim is.
+          </p>
+          <div style="background-color: rgba(0,0,0,0.25); border: 1px solid var(--border); padding: 16px; border-radius: 8px; font-size: 13.5px; margin-bottom: 18px;">
+            <strong>Ticket Overview:</strong> EDR analytics engine has escalated an anomaly from the Financial Operations server block. Workstation metrics indicate host computing degradation directly following a broad phishing mail run disguised as a corporate accounting adjustment message. Immediate asset isolation investigation is requested.
+          </div>
+          <div class="table-wrapper">
+            <table style="font-family: var(--mono); font-size: 13px;">
+              <tr><td style="width: 220px; font-weight: bold; color: var(--muted); background-color: rgba(0,0,0,0.15);">Target Machine Hostname</td><td>FIN-OPS-WS-88</td></tr>
+              <tr><td style="font-weight: bold; color: var(--muted); background-color: rgba(0,0,0,0.15);">Impacted Employee Profile</td><td>m.vance@horizon-global.corp</td></tr>
+              <tr><td style="font-weight: bold; color: var(--muted); background-color: rgba(0,0,0,0.15);">Suspected Threat Profile</td><td>Initial Access via Macro-Enabled Malicious Attachment File Vector</td></tr>
+              <tr><td style="font-weight: bold; color: var(--muted); background-color: rgba(0,0,0,0.15);">Assigned Queue Priority</td><td>Tier 1 Mitigation & Boundary Control Actions</td></tr>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="card phase-view hidden" id="view-3">
+        <div class="card-header">
+          <h2>Central Enterprise SIEM Log Correlation Engine</h2>
+          <span class="badge info">Correlated Multi-Device Logs</span>
+        </div>
+        <div class="card-body">
+          <p style="margin-top: 0; margin-bottom: 16px; color: var(--muted);">
+            <strong>The Scenario Step:</strong> Analysts never rely on a single data source. Use the console tabs below to cross-correlate separate logging systems (Email -> Proxy -> Firewall) to build a timeline of what happened. Find the exact payload attachment name and the external server IP.
+          </p>
+          <div class="siem-tabs">
+            <button class="siem-tab active" id="siem-tab-btn-email" onclick="switchSiemTab('email')">Secure Email Gateway</button>
+            <button class="siem-tab" id="siem-tab-btn-proxy" onclick="switchSiemTab('proxy')">Web Proxy Tracker</button>
+            <button class="siem-tab" id="siem-tab-btn-fw" onclick="switchSiemTab('fw')">Firewall Border Logs</button>
+          </div>
+          
+          <div class="siem-dataset" id="siem-pane-email">
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr><th>Timestamp</th><th>Sender Source</th><th>Recipient Target</th><th>Subject Line String Header</th><th>Attachment Flag</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>2026-05-18 08:12:02</td><td>internal-hr@horizon-global.corp</td><td>j.doe@horizon.corp</td><td>Benefits Overview Update</td><td>None</td></tr>
+                  <tr style="background: rgba(248,113,113,0.04);"><td>2026-05-18 08:14:11</td><td>fiscal-review@external-audits.net</td><td>m.vance@horizon-global.corp</td><td>CRITICAL: Q1 Revenue Adjustments</td><td style="color: var(--danger); font-weight: bold;">Q1_Review_Secure.docm</td></tr>
+                  <tr><td>2026-05-18 08:15:30</td><td>amazon-delivery@fulfillment.com</td><td>s.smith@horizon.corp</td><td>Package Delivery Status Tracker</td><td>None</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="siem-dataset hidden" id="siem-pane-proxy">
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr><th>Timestamp</th><th>Internal Client IP</th><th>Target External Destination Address</th><th>HTTP Method</th><th>Payload Size</th><th>Server Code</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>2026-05-18 08:14:45</td><td>10.10.45.20</td><td>internal-sharepoint.corp.local/home</td><td>GET</td><td>420 Bytes</td><td>200 OK</td></tr>
+                  <tr style="background: rgba(248,113,113,0.04);"><td>2026-05-18 08:15:02</td><td>10.10.45.20</td><td>cdn-updates-service.com/api/v1/session</td><td style="color: var(--warning); font-weight: bold;">POST</td><td>894.4 KB</td><td>200 OK</td></tr>
+                  <tr><td>2026-05-18 08:16:12</td><td>10.10.45.11</td><td>google.com/search</td><td>GET</td><td>180 Bytes</td><td>200 OK</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="siem-dataset hidden" id="siem-pane-fw">
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr><th>Timestamp</th><th>Source IP</th><th>External Destination IP Address</th><th>Target Port</th><th>Protocol</th><th>Action Verdict</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>2026-05-18 08:15:01</td><td>10.10.45.20</td><td>8.8.8.8</td><td>53</td><td>UDP</td><td>ALLOW</td></tr>
+                  <tr style="background: rgba(248,113,113,0.04);"><td>2026-05-18 08:15:02</td><td>10.10.45.20</td><td style="color: var(--danger); font-weight: bold;">185.220.101.5</td><td>80</td><td>TCP</td><td>ALLOW</td></tr>
+                  <tr style="background: rgba(251,191,36,0.04);"><td>2026-05-18 08:15:05</td><td>10.10.45.20</td><td>185.220.101.5</td><td>443</td><td>TCP</td><td>ALLOW</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card phase-view hidden" id="view-3">
+        <div class="card-header">
+          <h2>Network Packet Deep-Dive Terminal View</h2>
+          <span class="badge success">Handshake Trace Active</span>
+        </div>
+        <div class="card-body">
+          <p style="margin-top: 0; color: var(--muted);">
+            <strong>The Scenario Step:</strong> Log correlation tells you *where* the connection went, but checking packet structures allows you to confirm exactly *what* was compromised. Launch our internal terminal frame modal below to parse the unencrypted HTTP lines and find the leaked data.
+          </p>
+          <div style="background-color: rgba(0,0,0,0.25); border: 1px dashed var(--border); padding: 32px; border-radius: 12px; text-align: center;">
+            <p style="margin-top:0; font-size:13px; font-family: var(--mono); color: var(--muted);">Network Frame Stream Scope: <span style="color:#fff;">10.10.45.20 -> 185.220.101.5</span></p>
+            <button class="btn primary" style="margin-top: 10px;" onclick="toggleModal(true)">🔬 Launch In-App Terminal Packet Viewer Modal</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card phase-view hidden" id="view-4">
+        <div class="card-header">
+          <h2>Vulnerability Analysis & Risk Lifecycle Scoring</h2>
+          <span class="badge success">Case Closure Phase</span>
+        </div>
+        <div class="card-body">
+          <p style="margin-top: 0; color: var(--muted);">
+            <strong>The Scenario Step:</strong> Great SOC analysts don't just clear tickets—they harden the enterprise network infrastructure so the same attack blueprint can never break in again. Let's finish documentation by translating our discovery string into core CVSS risk indicators.
+          </p>
+          <div class="terminal-view" style="margin-bottom: 18px; min-height: auto; border-color: rgba(251,191,36,0.35);">
+            <pre style="color: var(--warning); font-weight: bold; font-size: 13px;">Identified Exploit Threat String: CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:H/I:H/A:H</pre>
+          </div>
+          
+          <div class="cvss-matrix">
+            <div class="cvss-block">
+              <label for="cvss-av">Attack Vector (AV)</label>
+              <select id="cvss-av">
+                <option value="">Select Parameter Metric...</option>
+                <option value="N">Network (AV:N) — Attack originated via Internet</option>
+                <option value="L">Local (AV:L) — Attacker needs physical or shell access</option>
+              </select>
+            </div>
+            <div class="cvss-block">
+              <label for="cvss-ui">User Interaction (UI)</label>
+              <select id="cvss-ui">
+                <option value="">Select Parameter Metric...</option>
+                <option value="N">None (UI:N) — Exploit self-executes flawlessly</option>
+                <option value="R">Required (UI:R) — Needs victim to open/click payload</option>
+              </select>
+            </div>
+            <div class="cvss-block">
+              <label for="cvss-s">Scope Constraint (S)</label>
+              <select id="cvss-s">
+                <option value="">Select Parameter Metric...</option>
+                <option value="U">Unchanged (S:U) — Affects only the target application</option>
+                <option value="C">Changed (S:C) — Compromises adjacent subnets or host layers</option>
+              </select>
+            </div>
+            <div class="cvss-block">
+              <label for="cvss-c">Confidentiality Impact (C)</label>
+              <select id="cvss-c">
+                <option value="">Select Parameter Metric...</option>
+                <option value="H">High (C:H) — Maximum data exposure occurred</option>
+                <option value="N">None (C:N) — No operational data was exposed</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="response-panel">
+      <div class="card" style="position: sticky; top: 115px;">
+        <div class="card-header" style="background-color: var(--panel-hdr);">
+          <h2 id="panel-phase-title">Briefing Room Control</h2>
+        </div>
+        <div class="card-body">
+          
+          <div class="form-group">
+            <label for="scratchpad">Analyst Work Scratchpad</label>
+            <textarea id="scratchpad" rows="2" style="font-family: var(--mono); font-size: 12px;" placeholder="Use this space to copy/paste IPs, file names, or hex strings during your investigation shift..."></textarea>
+          </div>
+          <div style="border-top: 1px solid var(--border); margin: 14px 0;"></div>
+
+          <div id="phase-questions-area"></div>
+
+          <div style="margin-top: 18px;">
+            <button class="btn primary" style="width: 100%; justify-content: center;" id="btn-submit-phase" onclick="evaluateCurrentPhaseAnswers()">Lock and Verify Phase Answers</button>
+          </div>
+
+          <div class="feedback-box" id="phase-feedback-box"></div>
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="modal-overlay" id="pcap-modal">
+    <div class="modal-window">
+      <div class="card-header" style="background-color: #0c111d; border-bottom: 1px solid rgba(255,255,255,0.15);">
+        <div style="display: flex; flex-direction: column;">
+          <h2 style="color: var(--accent); font-family: var(--mono); margin: 0; font-size: 13px;">Terminal Window Terminal — Raw Packet Stream Frame Decoder</h2>
+          <span style="font-size: 11px; color: var(--muted); margin-top: 2px;">Sensor Execution Target: tshark -r boundary_egress.pcap -V</span>
+        </div>
+        <button class="btn" onclick="toggleModal(false)" style="padding: 6px 12px; font-size: 12px; background-color: rgba(255,255,255,0.05);">Close Console Terminal ×</button>
+      </div>
+      <div style="padding: 20px; overflow-y: auto; background-color: var(--terminal-bg); flex-grow: 1;">
+        <pre style="line-height: 1.6; color: #34d399;">
+<span style="color: #6272a4;"># Engine isolating frame handshake reference data sequence: frame.number == 1422</span>
+
+Frame 1422: 432 bytes on interface card wire, 432 bytes captured
+Transmission Control Protocol, Src Port: 55431, Dst Port: 80, Seq: 1, Ack: 1, Len: 378
+    Source IP Address Scope: Internal Corporate VLAN Asset [10.10.45.20]
+    Destination IP Address Scope: External Foreign Address Space [185.220.101.5]
+    [Handshake Socket Index Reference ID: 42]
+
+Hypertext Transfer Protocol (Layer 7 Content Data Segment)
+    <span style="color: #fbbf24; font-weight: bold;">POST /api/v1/session HTTP/1.1\r\n</span>
+    Host: cdn-updates-service.com\r\n
+    User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) ApplicationRuntimeEngine/1.0\r\n
+    Accept: */*\r\n
+    Content-Type: application/x-www-form-urlencoded\r\n
+    Content-Length: 148\r\n
+    Connection: keep-alive\r\n
+    \r\n
+    [HTTP Request Content Payload Unpacked Parameter Block]
+        Line-based text string format: application/x-www-form-urlencoded
+        <span style="color: #f87171; font-weight: bold;">Form Parameters Stream: target_host=FIN-OPS-WS-88&stolen_token=0x9AAFF21884BCDE22A1&exfil_route=active_beacon</span>
+
+Frame 1423: 112 bytes returned as handshake acknowledgement
+Hypertext Transfer Protocol
+    <span style="color: var(--accent); font-weight: bold;">HTTP/1.1 200 OK\r\n</span>
+    Server: nginx/1.18.0\r\n
+    Content-Length: 2\r\n
+    \r\n
+    [Acknowledge Status Value]: OK
+        </pre>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* Global Application State Definitions */
+    let currentPhase = 0;
+    let phaseSubmitted = [false, false, false, false, false, false];
+
+    // Tactical SOC Key Performance Indicator Scoring Buckets
+    let socMetrics = {
+      triageScore: 0,       // Max 100% (Phase 1)
+      analysisScore: 0,     // Max 40 Points (Phases 2 & 3)
+      containmentScore: 0   // Max 40 Points (Phases 4 & 5)
+    };
+
+    const triageAlertData = [
+      `[EDR Log Event Data Snapshot Line]\nTimestamp: 2026-05-18T08:14:32Z\nParent Application Context: explorer.exe (PID: 3412)\nTrigger Application Context: winword.exe (PID: 8812)\nCommand Execution Invocation Path: "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE" /n "C:\\Users\\m.vance\\Downloads\\Q1_Review_Secure.docm"\nAnomalous Child Process Spawned: powershell.exe (PID: 9940)\nArguments Passed: -NoP -NonI -W Hidden -Exec Bypass -Enc dGFyZ2V0PUZJTi1PUFMtV1MtODgmc3RvbGVuX3Rva2VuPTB4OUFBRkYyMTg4NEJDREUyMkEx`,
+      `[Host Perimeter Network Firewall Log Output]\nTimestamp: 2026-05-18T08:15:40Z\nDirection Flag: Outbound Connection\nProcess Source: svchost.exe\nTarget Query String: updates.microsoft.com\nPort Target: 443 (HTTPS Connection Link)\nVerdict: ALLOW (Activity matches baseline signature rules for standard system update checks)`,
+      `[Security Event Log Ingestion Data Schema]\nEvent ID: 4698\nTask Registry Monitor Path: \\Microsoft\\Windows\\UpdateManagement\\EngineValidation\nCommand Run Value: C:\\Windows\\System32\\cmd.exe /c "echo baseline_check > null"\nContext Account Execution User: SYSTEM\nAnalysis Note: Standard automated device component update cycle detected.`,
+      `[Network Intrusion Detection System Alert Log]\nInbound Alert Event Signature Hit: RECON - General Sweep Discovery Profiling Probe Attempt\nSource Attacker Space: 45.33.91.102\nInternal Interface Target: 10.10.45.1\nPayload Captured String: GET /index.html HTTP/1.1\\r\\nUser-Agent: Nikto/v2.1`
+    ];
+
+    const phaseQuestions = [
+      // Phase 0: Briefing Room Questions
+      `
+        <div class="form-group">
+          <label for="p0-q1">Ready to start your shift?</label>
+          <select id="p0-q1">
+            <option value="">Select Response...</option>
+            <option value="ready">Acknowledge Supervisor Dispatch & Open Active Alarm Console</option>
+          </select>
+        </div>
+        <p style="font-size: 12.5px; color: var(--muted); margin-top: 10px;">
+          <strong>Tip:</strong> Listen to/read the Supervisor Briefing completely. When ready, acknowledge the dispatch above to unlock Phase 1.
+        </p>
+      `,
+      // Phase 1: Alert Triage Questions
+      `
+        <div class="form-group">
+          <label for="p1-q1">1) Examine the 4 queue lines. Which Alert ID represents an execution chain anomaly where a productivity file forces the computer to spawn hidden admin scripting shells?</label>
+          <select id="p1-q1">
+            <option value="">Select Option...</option>
+            <option value="2219">ALT-2219 (Host EDR Application Inheritance Anomaly)</option>
+            <option value="9081">ALT-9081 (Edge Firewall Baseline Validation Sync)</option>
+            <option value="4412">ALT-4412 (System Event Log Automated Maintenance Loop)</option>
+            <option value="5567">ALT-5567 (NIDS Inbound Boundary Probe Scan)</option>
+          </select>
+        </div>
+      `,
+      // Phase 2: Ticket Intake Questions
+      `
+        <div class="form-group">
+          <label for="p2-q1">1) Review your ticket file attributes. Which target enterprise asset hostname represents the focus point of the active threat?</label>
+          <select id="p2-q1">
+            <option value="">Select Option...</option>
+            <option value="ws88">FIN-OPS-WS-88 (Financial Operations Workstation)</option>
+            <option value="ws11">FIN-OPS-WS-11 (Human Resources Workspace Terminal)</option>
+            <option value="dc01">DOMAIN-CTRL-01 (Primary Enterprise Domain Controller)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="p2-q2">2) Security+ taught you definitions; CySA+ teaches action. What is the immediate first technical step to contain this asset via EDR?</label>
+          <select id="p2-q2">
+            <option value="">Select Option...</option>
+            <option value="wipe">Format the drive arrays immediately to wipe all server trace files</option>
+            <option value="isolate">Isolate the host from the local network via EDR boundary rules</option>
+            <option value="monitor">Maintain a passive response state to watch the file transfer metrics grow</option>
+          </select>
+        </div>
+      `,
+      // Phase 3: SIEM Timeline Questions
+      `
+        <div class="form-group">
+          <label for="p3-q1">1) Pivot through the SIEM log tabs. What is the explicit filename of the weaponized phishing email attachment delivered to the victim?</label>
+          <select id="p3-q1">
+            <option value="">Select Option...</option>
+            <option value="benefits">Benefits Strategy.pdf</option>
+            <option value="q1review">Q1_Review_Secure.docm (Macro-Enabled Document)</option>
+            <option value="invoice">Invoice_Manifest.exe</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="p3-q2">2) Cross-reference the firewall tab parameters. What external malicious destination IP did the workstation contact directly after execution?</label>
+          <select id="p3-q2">
+            <option value="">Select Option...</option>
+            <option value="dns">8.8.8.8 (Google Recursive Resolver)</option>
+            <option value="c2">185.220.101.5 (External C2 Address Node)</option>
+            <option value="ms">23.45.112.90 (Microsoft Content Delivery Mirror)</option>
+          </select>
+        </div>
+      `,
+      // Phase 4: Packet Analysis Questions
+      `
+        <div class="form-group">
+          <label for="p4-q1">1) Open the terminal viewer console. Look inside the red parameters text string line. What unencrypted token variable was exfiltrated?</label>
+          <select id="p4-q1">
+            <option value="">Select Option...</option>
+            <option value="tok1">0x9AAFF21884BCDE22A1</option>
+            <option value="tok2">0x7BBEE11334AADE11</option>
+            <option value="tok3">0xFFEEDDCCBBAA9988</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="p4-q2">2) Based on the highlighted packet output lines, what cleartext protocol was exploited to upload this credential token?</label>
+          <select id="p4-q2">
+            <option value="">Select Option...</option>
+            <option value="http">HTTP POST Request Profile</option>
+            <option value="dns">DNS Subsystem Tunneling Link</option>
+            <option value="ssh">SSH Encrypted Terminal Interface</option>
+          </select>
+        </div>
+      `,
+      // Phase 5: Root Cause Questions
+      `
+        <div class="form-group">
+          <label for="p5-q1">1) Translate the given CVSS v3.1 vector values. What does the "UI:R" metric field define about this attack lifecycle?</label>
+          <select id="p5-q1">
+            <option value="">Select Option...</option>
+            <option value="none">User Interaction is None; the file executes silently with no clicks</option>
+            <option value="required">User Interaction is Required; the user had to open the macro document</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="p5-q2">2) What corporate system infrastructure policy adjustment eliminates this entry vector pattern across the company?</label>
+          <select id="p5-q2">
+            <option value="">Select Option...</option>
+            <option value="macro">Block Internet-origin macro attachments from executing via Active Directory GPO</option>
+            <option value="password">Force all enterprise domain users to rotate baseline credential strings</option>
+          </select>
+        </div>
+      `
+    ];
+
+    function switchPhase(phaseIdx) {
+      currentPhase = phaseIdx;
+      
+      document.querySelectorAll('.pipeline-step').forEach((btn, idx) => {
+        btn.classList.toggle('active', idx === phaseIdx);
+      });
+
+      document.querySelectorAll('.phase-view').forEach((view, idx) => {
+        view.classList.toggle('hidden', idx !== phaseIdx);
+      });
+
+      document.getElementById('panel-phase-title').textContent = `Phase ${phaseIdx} Action Window`;
+      
+      const qArea = document.getElementById('phase-questions-area');
+      qArea.innerHTML = phaseQuestions[phaseIdx];
+
+      const fb = document.getElementById('phase-feedback-box');
+      fb.classList.remove('show');
+      fb.innerHTML = '';
+      
+      const submitBtn = document.getElementById('btn-submit-phase');
+      if (phaseSubmitted[phaseIdx]) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Phase Actions Graded & Locked";
+      } else {
+        submitBtn.disabled = false;
+        submitBtn.textContent = (phaseIdx === 0) ? "Accept Assignment" : "Lock and Verify Phase Answers";
+      }
+    }
+
+    function simulateVideoPlayback() {
+      const vBox = document.getElementById('video-ui-playback');
+      vBox.innerHTML = `
+        <div class="audio-wave">
+          <div class="wave-bar" style="height: 20px;"></div>
+          <div class="wave-bar" style="height: 40px;"></div>
+          <div class="wave-bar" style="height: 15px;"></div>
+          <div class="wave-bar" style="height: 35px;"></div>
+          <div class="wave-bar" style="height: 25px;"></div>
+        </div>
+        <div style="font-size:12px; margin-top:10px; color: var(--success); font-family: var(--mono);">[STREAMING LIVE INTEL DISPATCH AUDIO FEED...]</div>
+      `;
+
+      const txt = document.getElementById('briefing-transcript-panel').querySelector('pre');
+      txt.style.color = "var(--success)";
+      txt.style.fontStyle = "normal";
+      txt.textContent = `[TRANSCRIPT - SARAH JENKINS]: "Team, listen up. We have an active incident tracking footprint escalating out of Financial Operations. Our host monitors just flagged anomalous outbound network activity flashing from endpoint host FIN-OPS-WS-88. The user account reports their local machine processing speed dragged directly after opening a fiscal revenue adjustment attachment.
+
+Your mission is to execute our incident response cycle standard. Go to your active Ingestion Alarm queue, isolate the malicious process chain signature, trace the exfiltration route through our SIEM data tabs, and parse the raw packet header streams to verify what data tokens were leaked. This is a real-world scenario—triage accurately and protect our infrastructure. Move out."`;
+    }
+
+    function selectTriageAlert(alertIdx, elementRow) {
+      document.querySelectorAll('#view-1 tbody tr').forEach(tr => tr.classList.remove('selected'));
+      elementRow.classList.add('selected');
+      document.getElementById('triage-pane-details').querySelector('pre').textContent = triageAlertData[alertIdx];
+    }
+
+    function switchSiemTab(tabKey) {
+      document.querySelectorAll('.siem-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.id === `siem-tab-btn-${tabKey}`);
+      });
+      document.querySelectorAll('.siem-dataset').forEach(dataset => {
+        dataset.classList.toggle('hidden', dataset.id !== `siem-pane-${tabKey}`);
+      });
+    }
+
+    function toggleModal(showFlag) {
+      document.getElementById('pcap-modal').classList.toggle('show', showFlag);
+    }
+
+    function updateSOCDashboardUI() {
+      document.getElementById('stat-triage').textContent = `${socMetrics.triageScore}%`;
+      document.getElementById('stat-analysis').textContent = `${socMetrics.analysisScore} / 40`;
+      document.getElementById('stat-containment').textContent = `${socMetrics.containmentScore} / 40`;
+    }
+
+    /* Core Instructional Response Evaluation Matrix Engine */
+    function evaluateCurrentPhaseAnswers() {
+      let feedbackHtml = '';
+      
+      if (currentPhase === 0) {
+        const val = document.getElementById('p0-q1').value;
+        if (val === 'ready') {
+          feedbackHtml = `<div class="badge success">Briefing Completed</div><p style="font-size:12.5px; color:var(--muted); margin:6px 0 0;">Assignment logged. Click Step 1 "Alert Triage" on the top navigation map track to initialize your shift ingest queue.</p>`;
+        } else {
+          alert("Acknowledge the briefing parameters before entering the shift console.");
+          return;
+        }
+      }
+      else if (currentPhase === 1) {
+        const val = document.getElementById('p1-q1').value;
+        if (val === '2219') {
+          socMetrics.triageScore = 100;
+          feedbackHtml = `<div class="badge success">True Positive Isolated</div><p style="font-size:12.5px; color:var(--muted); margin:6px 0 0;"><strong>Correct Analyst Path:</strong> ALT-2219 captures Word spawning a hidden administrative PowerShell console. In security monitoring, productivity software executing system scripting tools is an immediate indicator of malicious process compromise.</p>`;
+        } else {
+          socMetrics.triageScore = 0;
+          feedbackHtml = `<div class="badge danger">False Alarm Triggered</div><p style="font-size:12.5px; color:var(--muted); margin:6px 0 0;"><strong>Operational Teaching Point:</strong> The chosen alert represents standard baseline system noise. Look for the anomaly row where a routine program is hijacked to run hidden scripting engines.</p>`;
+        }
+      } 
+      else if (currentPhase === 2) {
+        const q1 = document.getElementById('p2-q1').value;
+        const q2 = document.getElementById('p2-q2').value;
+        if (q1 === 'ws88' && q2 === 'isolate') {
+          socMetrics.analysisScore += 20;
+          feedbackHtml = `<div class="badge success">Containment Strategy Validated</div><p style="font-size:12.5px; color:var(--muted); margin:6px 0 0;"><strong>Correct Analyst Path:</strong> Isolating the targeted asset via the local EDR agent severs network connectivity—this breaks the hacker's link and stops horizontal network propagation while preserving trace files in memory.</p>`;
+        } else {
+          feedbackHtml = `<div class="badge danger">Containment Misalignment</div><p style="font-size:12.5px; color:var(--muted); margin:6px 0 0;"><strong>Operational Teaching Point:</strong> Re-check the ticket attributes column. Formatting the drive completely is a destructive action that wipes critical volatile investigation traces inside RAM. Choose host isolation.</p>`;
+        }
+      }
+      else if (currentPhase === 3) {
+        const q1 = document.getElementById('p3-q1').value;
+        const q2 = document.getElementById('p3-q2').value;
+        if (q1 === 'q1review' && q2 === 'c2') {
+          socMetrics.analysisScore += 20;
+          feedbackHtml = `<div class="badge success">SIEM Timelines Aligned</div><p style="font-size:12.5px; color:var(--muted); margin:6px 0 0;"><strong>Correct Analyst Path:</strong> Outstanding alignment work. Matching the email arrival window to the outbound web proxy POST log and tracking the target firewall egress IP traces the exact command link path.</p>`;
+        } else {
+          feedbackHtml = `<div class="badge danger">Correlation Disconnect</div><p style="font-size:12.5px; color:var(--muted); margin:6px 0 0;"><strong>Operational Teaching Point:</strong> Pivot across the tracking tabs carefully. Locate the exact document payload file extension that arrived via the gateway right before the outbound browser post session spiked.</p>`;
+        }
+      }
+      else if (currentPhase === 4) {
+        const q1 = document.getElementById('p4-q1').value;
+        const q2 = document.getElementById('p4-q2').value;
+        if (q1 === 'tok1' && q2 === 'http') {
+          socMetrics.containmentScore += 20;
+          feedbackHtml = `<div class="badge success">Handshake Signature Parsed</div><p style="font-size:12.5px; color:var(--muted); margin:6px 0 0;"><strong>Correct Analyst Path:</strong> Parsing raw data strings proves what was compromised. Identifying <code>stolen_token=0x9AAFF21884BCDE22A1</code> inside cleartext parameters allows you to notify identity teams to revoke the user session credentials.</p>`;
+        } else {
+          feedbackHtml = `<div class="badge danger">Payload Metrics Unresolved</div><p style="font-size:12.5px; color:var(--muted); margin:6px 0 0;"><strong>Operational Teaching Point:</strong> Open the frame modal again. Scan the red data parameters path in Frame 1422 to pull the explicit unencrypted token string variable.</p>`;
+        }
+      }
+      else if (currentPhase === 5) {
+        const q1 = document.getElementById('p5-q1').value;
+        const q2 = document.getElementById('p5-q2').value;
+        
+        // CVSS base level parameters mapping verification checks
+        const av = document.getElementById('cvss-av').value;
+        const ui = document.getElementById('cvss-ui').value;
+        const s = document.getElementById('cvss-s').value;
+        const c = document.getElementById('cvss-c').value;
+
+        if (q1 === 'required' && q2 === 'macro' && av === 'N' && ui === 'R' && s === 'C' && c === 'H') {
+          socMetrics.containmentScore += 20;
+          feedbackHtml = `<div class="badge success">Shift Operations Ledger Finalized</div><p style="font-size:12.5px; color:var(--muted); margin:6px 0 0;"><strong>Correct Analyst Path:</strong> Exceptional risk assessment coverage. The threat came from the internet (AV:N), required user action (UI:R), impacted adjacent application scopes (S:C), and caused data exposure (C:H). Implementing Active Directory GPO macro blocks prevents the vector permanently.</p>`;
+        } else {
+          feedbackHtml = `<div class="badge danger">Risk Documentation Defect</div><p style="font-size:12.5px; color:var(--muted); margin:6px 0 0;"><strong>Operational Teaching Point:</strong> Review the provided string variables profile map: <code>AV:N</code> maps to Network origin, <code>UI:R</code> means User Interaction Required, <code>S:C</code> marks Changed Scope, and <code>C:H</code> is High Confidentiality.</p>`;
+        }
+      }
+
+      phaseSubmitted[currentPhase] = true;
+      document.getElementById(`step-${currentPhase}`).classList.add('completed');
+      updateSOCDashboardUI();
+
+      const fbBox = document.getElementById('phase-feedback-box');
+      fbBox.innerHTML = feedbackHtml;
+      fbBox.classList.add('show');
+      document.getElementById('btn-submit-phase').disabled = true;
+    }
+
+    function startGlobalTimer(durationSeconds) {
+      let tLeft = durationSeconds;
+      const display = document.getElementById('global-timer');
+      const timerLoop = setInterval(() => {
+        let mins = Math.floor(tLeft / 60);
+        let secs = tLeft % 60;
+        display.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        if (--tLeft < 0) {
+          clearInterval(timerLoop);
+          display.textContent = "EXPIRED";
+        }
+      }, 1000);
+    }
+
+    function showMasterSummary() {
+      const finalScore = (socMetrics.triageScore === 100 ? 20 : 0) + socMetrics.analysisScore + socMetrics.containmentScore;
+      
+      let performanceReview = "";
+      if (finalScore >= 90) {
+        performanceReview = "Elite Incident Handler Prospect: Perfect operational response lifecycle execution! You efficiently separated queue noise from anomalies, leveraged your SIEM layers to build a bulletproof timeline, and translated exploit markers directly into permanent system hardening fixes.";
+      } else if (finalScore >= 70) {
+        performanceReview = "Solid Tier 1 Incident Analyst: Good foundational awareness. Minor analytical delays or sub-optimal containment paths created small coverage gaps, but you successfully resolved the target compromise chain.";
+      } else {
+        profileReview = "Investigation Remediation Required: Investigative misalignments or poor containment playbooks allowed active exfiltration channels to persist. Review event pipelines and indicator tracking parameters to sharpen pattern recognition.";
+      }
+
+      alert(`=== SECURITY OPERATIONS CENTER INCIDENT AUDIT LEDGER ===\n\n` +
+            `Shift Supervisor Review:\n${performanceReview}\n\n` +
+            `Operational KPI Dashboard Performance Metrics:\n` +
+            `- Initial Alert Triage Ingestion Fidelity: ${socMetrics.triageScore}%\n` +
+            `- Central SIEM Timeline Correlation Depth: ${socMetrics.analysisScore} / 40 Points\n` +
+            `- Permanent Enterprise Remediation Efficacy: ${socMetrics.containmentScore} / 40 Points\n\n` +
+            `This operational shift record has been saved and compiled to your repository portfolio profile parameters.`);
+    }
+
+    function startGlobalTimer(durationSeconds) {
+      let tLeft = durationSeconds;
+      const display = document.getElementById('global-timer');
+      const timerLoop = setInterval(() => {
+        let mins = Math.floor(tLeft / 60);
+        let secs = tLeft % 60;
+        display.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        if (--tLeft < 0) { clearInterval(timerLoop); display.textContent = "EXPIRED"; }
+      }, 1000);
+    }
+
+    /* Ignition Toggle Activation */
+    window.onload = function() {
+      switchPhase(0);
+      startGlobalTimer(1800);
+    };
+  </script>
+</body>
+</html>
