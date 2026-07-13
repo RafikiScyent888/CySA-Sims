@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>CySA+ Simulation Lab</title>
+<style>
+:root{
+  --sky:#38bdf8;
+  --sky-dark:#0284c7;
+  --sky-deep:#0369a1;
+  --bg:#eaf6ff;
+  --card:#ffffff;
+  --text:#0f172a;
+  --muted:#5b7186;
+  --border:#d6ecfb;
+  --good:#16a34a;
+  --progress-bg:rgba(3,105,161,0.1);
+}
+*{box-sizing:border-box}
+body{
+  font-family:"Segoe UI",Inter,Arial,sans-serif;
+  margin:0;
+  min-height:100vh;
+  background:linear-gradient(180deg,#bfe9ff 0%,var(--bg) 320px, var(--bg) 100%);
+  color:var(--text);
+}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 20px 60px}
+.hero{
+  background:linear-gradient(135deg,var(--sky) 0%,var(--sky-dark) 100%);
+  color:#fff;
+  border-radius:18px;
+  padding:26px 28px;
+  box-shadow:0 12px 30px rgba(3,105,161,0.25);
+  margin-bottom:18px;
+}
+h1{margin:0 0 6px 0;font-size:26px}
+.sub{color:rgba(255,255,255,0.92);font-size:14.5px;margin:0;line-height:1.5}
+.disclaimer{
+  background:rgba(3,41,64,0.9);
+  color:#f0f9ff;
+  font-size:12.5px;
+  line-height:1.5;
+  border-radius:12px;
+  padding:10px 16px;
+  margin:16px 0 22px;
+  text-align:center;
+}
+.disclaimer strong{color:#fde047}
+.progress-bar-wrap{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:16px 20px;
+  margin-bottom:22px;
+  box-shadow:0 6px 18px rgba(3,105,161,0.08);
+}
+.progress-row{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.progress-label{font-weight:700;font-size:14.5px;color:var(--sky-deep)}
+.progress-track{
+  flex:1;
+  min-width:160px;
+  height:10px;
+  background:var(--progress-bg);
+  border-radius:999px;
+  overflow:hidden;
+}
+.progress-fill{
+  height:100%;
+  background:linear-gradient(90deg,var(--sky-dark),var(--good));
+  border-radius:999px;
+  transition:width .3s ease;
+  width:0%;
+}
+.progress-count{font-size:13.5px;color:var(--muted);white-space:nowrap}
+.reset-btn{
+  background:transparent;
+  border:1px solid var(--border);
+  color:var(--muted);
+  font-size:12.5px;
+  padding:6px 12px;
+  border-radius:8px;
+  cursor:pointer;
+}
+.reset-btn:hover{border-color:var(--sky-dark);color:var(--sky-deep)}
+h2{margin:22px 0 4px 0;font-size:18px;color:var(--sky-deep)}
+.section-sub{color:var(--muted);font-size:13.5px;margin:0 0 14px}
+.tiles{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+  gap:16px;
+}
+.tile{
+  position:relative;
+  border-radius:18px;
+  padding:20px 18px;
+  color:#fff;
+  text-decoration:none;
+  min-height:140px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  box-shadow:0 10px 24px rgba(2,6,23,0.18);
+  transition:transform .12s ease, box-shadow .12s ease;
+}
+.tile:hover{transform:translateY(-4px);box-shadow:0 16px 32px rgba(2,6,23,0.28)}
+.tile .icon{font-size:32px;line-height:1}
+.tile .ttitle{font-size:15.5px;font-weight:800;margin-top:10px;line-height:1.25}
+.tile .tsub{font-size:12px;opacity:.92;margin-top:6px}
+.tile .badge{
+  position:absolute;
+  top:14px;
+  right:14px;
+  font-size:11px;
+  font-weight:700;
+  padding:3px 9px;
+  border-radius:999px;
+  background:rgba(255,255,255,0.22);
+  backdrop-filter:blur(2px);
+}
+.tile .badge.completed{background:#fff;color:var(--good)}
+.tile.lightning{background:linear-gradient(135deg,#a78bfa,#4c1d95)}
+.tile.fire{background:linear-gradient(135deg,#fb923c,#dc2626)}
+.tile.storm{background:linear-gradient(135deg,#475569,#1e293b)}
+.tile.sun{background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#4a2c00}
+.tile.sun .tsub{color:#5c3a00}
+.tile.sun .badge{background:rgba(0,0,0,0.15);color:#4a2c00}
+.tile.sun .badge.completed{background:#fff;color:#166534}
+.tile.green{background:linear-gradient(135deg,#34d399,#059669)}
+footer{
+  text-align:center;
+  color:var(--muted);
+  font-size:12px;
+  margin-top:32px;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>CySA+ Simulation Lab</h1>
+    <p class="sub">Interactive, performance-based practice simulations (PBQs) covering CompTIA CySA+ (CS0-003) scenarios &mdash; log &amp; incident analysis, kill chain identification, vulnerability triage, and SOC analyst workflows.</p>
+  </div>
+
+  <div class="disclaimer"><strong>Educational use only.</strong> This site is a self-study practice tool built from original simulation exercises. It is not affiliated with, endorsed by, or sponsored by CompTIA&reg;. CompTIA and CySA+ are trademarks of CompTIA, Inc. Always confirm current exam content on comptia.org.</div>
+
+  <div class="progress-bar-wrap">
+    <div class="progress-row">
+      <span class="progress-label">Your progress</span>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <span class="progress-count" id="progressCount">0 of 19 completed</span>
+      <button class="reset-btn" id="resetBtn">Reset progress</button>
+    </div>
+  </div>
+
+  <h2>Simulations</h2>
+  <p class="section-sub">Click a tile to open that simulation. Each one opens with a "Back to Dashboard" link pinned to the top, so you can leave and come back anytime &mdash; your completed simulations stay marked on this page.</p>
+  <div class="tiles" id="tiles"></div>
+
+  <footer>CySA+ Simulation Lab &middot; For educational practice purposes only &middot; Not affiliated with CompTIA</footer>
+</div>
+
+<script>
+const SIMS = [
+  { id:"cyber-investigation", href:"1.Cybersecurity Investigation.html", theme:"lightning", icon:"⚡", title:"Malicious Behavior Analysis", sub:"Analyze suspicious system activity" },
+  { id:"kill-chain-stages", href:"2.Kill chain.html", theme:"fire", icon:"🔥", title:"Kill Chain Stages Exercise", sub:"Map evidence to kill chain stages" },
+  { id:"vuln-remediation", href:"3.Vulnerability Remediation.html", theme:"storm", icon:"⛈️", title:"Vulnerability Remediation Simulation", sub:"Prioritize and remediate vulnerabilities" },
+  { id:"cyber-config", href:"4.Cybersecurity Configuration.html", theme:"sun", icon:"☀️", title:"Cybersecurity Configuration Verification Lab", sub:"Verify and recommend secure configs" },
+  { id:"nmap-security-analysis", href:"5.Security Analysis .html", theme:"green", icon:"🌱", title:"Nmap Server Role & Security Analysis", sub:"Interpret Nmap scan output" },
+  { id:"it-help-desk", href:"6.IT Help Desk.html", theme:"lightning", icon:"⚡", title:"IT Help Desk Simulation", sub:"Resolve a reported security issue" },
+  { id:"suspicious-login", href:"7.Cybersecurity Suspicous Login.html", theme:"fire", icon:"🔥", title:"Security Logs Analysis Lab", sub:"Investigate a suspicious login" },
+  { id:"web-server-vuln", href:"8.Web Server Vulnerability.html", theme:"storm", icon:"⛈️", title:"Web Server Vulnerability Assessment", sub:"Assess and respond to web server findings" },
+  { id:"security-incident-quiz", href:"9.Security Incident.html", theme:"sun", icon:"☀️", title:"Security Incident Analysis Quiz", sub:"Connect evidence across a full incident" },
+  { id:"phishing-log-review", href:"10. Phishing Log Review.html", theme:"green", icon:"🌱", title:"Phishing Attack Simulation", sub:"Review logs for a phishing attack" },
+  { id:"analyst-workbench", href:"CySA+ Analyst Workbench OWASP Top 10 Assessment and CVSS Triage Simulator.html", theme:"lightning", icon:"⚡", title:"Analyst Workbench: OWASP Top 10 & CVSS Triage", sub:"Classify findings and score with CVSS" },
+  { id:"soc-induction-portal", href:"CySA+ SOC Simulation.html", theme:"fire", icon:"🔥", title:"SecOps Horizon: Tier 1 SOC Induction Portal", sub:"Multi-phase SOC analyst onboarding sim" },
+  { id:"ioc-triage-lab", href:"IOC Triage - Analyst Decision Lab.html", theme:"storm", icon:"⛈️", title:"IOC Triage: Analyst Decision Lab", sub:"Triage and classify 7 artifacts under time pressure" },
+  { id:"incident-ticket-analysis", href:"Security Incident Ticket Analysis.html", theme:"sun", icon:"☀️", title:"Security Incident Ticket Analysis", sub:"Classify and resolve four analyst tickets" },
+  { id:"attack-lifecycle", href:"SOC Analyst Simulation - Attack Lifecycle Identification (Cyber Kill Chain)/SOC Analyst Simulation – Attack Lifecycle Identification (Cyber Kill Chain).html", theme:"green", icon:"🌱", title:"Attack Lifecycle Identification (Kill Chain)", sub:"SOC analyst kill-chain identification sim" },
+  { id:"endpoint-behavioral", href:"SOC Analyst Simulation - Endpoint Behavioral Analysis Simulation - Process & Persistence/Endpoint Behavioral Analysis Simulation - Process & Persistence.html", theme:"lightning", icon:"⚡", title:"Endpoint Behavioral Analysis: Process & Persistence", sub:"Investigate suspicious endpoint processes" },
+  { id:"incident-kill-chain", href:"SOC Analyst Simulation - Incident Kill Chain Analysis/SOC Analyst Simulation - Incident Kill Chain Analysis.html", theme:"fire", icon:"🔥", title:"Incident Kill Chain Analysis", sub:"Full SOC analyst kill chain investigation" },
+  { id:"log-correlation-c2", href:"SOC Analyst Simulation - Log Correlation - Phishing to C2/SOC Analyst Correlation Lab - Phishing to C2.html", theme:"storm", icon:"⛈️", title:"Log Correlation: Phishing to C2", sub:"Correlate logs from phish to beaconing" },
+  { id:"web-exploitation", href:"SOC Analyst Simulation - Web Exploitation, Directory Traversal & Data Exposure/SOC Analyst Simulation - Web Exploitation, Directory Traversal & Data Exposure.html", theme:"sun", icon:"☀️", title:"Web Exploitation & Data Exposure", sub:"Directory traversal & data exposure investigation" },
+];
+
+const KEY = "simhub_progress_cysasims";
+function loadProgress(){
+  try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch(e){ return {}; }
+}
+function saveProgress(p){ localStorage.setItem(KEY, JSON.stringify(p)); }
+
+function render(){
+  const progress = loadProgress();
+  const tilesEl = document.getElementById("tiles");
+  tilesEl.innerHTML = "";
+  let completedCount = 0;
+
+  SIMS.forEach(sim => {
+    const state = progress[sim.id];
+    const status = state ? state.status : "not-started";
+    if (status === "completed") completedCount++;
+
+    const a = document.createElement("a");
+    a.href = sim.href;
+    a.className = `tile ${sim.theme}`;
+
+    let badgeHtml = "";
+    if (status === "completed") badgeHtml = `<span class="badge completed">✓ Completed</span>`;
+    else if (status === "in-progress") badgeHtml = `<span class="badge">In progress</span>`;
+
+    a.innerHTML = `
+      ${badgeHtml}
+      <div class="icon">${sim.icon}</div>
+      <div>
+        <div class="ttitle">${sim.title}</div>
+        <div class="tsub">${sim.sub}</div>
+      </div>
+    `;
+    tilesEl.appendChild(a);
+  });
+
+  const pct = Math.round((completedCount / SIMS.length) * 100);
+  document.getElementById("progressFill").style.width = pct + "%";
+  document.getElementById("progressCount").textContent = `${completedCount} of ${SIMS.length} completed`;
+}
+
+document.getElementById("resetBtn").addEventListener("click", () => {
+  if (confirm("Reset all simulation progress on this device?")) {
+    saveProgress({});
+    render();
+  }
+});
+
+render();
+</script>
+</body>
+</html>
