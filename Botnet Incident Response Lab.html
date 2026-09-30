@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CySA+ Simulation: Botnet Containment & Incident Response</title>
+    <style>
+        :root {
+            --bg-main: #0b0f17;
+            --bg-card: #151d2a;
+            --bg-card-hover: #1e293b;
+            --border-color: #2a374a;
+            --border-highlight: #38bdf8;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent-blue: #0284c7;
+            --accent-cyan: #38bdf8;
+            --accent-red: #f87171;
+            --accent-green: #4ade80;
+            --term-bg: #030712;
+            --modal-bg: #151d2a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* App Container Layout */
+        .app-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* Left Sidebar Controls */
+        .sidebar {
+            width: 360px;
+            background-color: #0f172a;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--accent-cyan);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 4px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            align-self: flex-start;
+        }
+
+        .sidebar h1 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-main);
+            line-height: 1.3;
+        }
+
+        .sidebar-section {
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 16px;
+        }
+
+        .sidebar-section:last-child {
+            border-bottom: none;
+        }
+
+        .sidebar-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+
+        .sidebar p {
+            font-size: 0.85rem;
+            color: #cbd5e1;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+
+        .instruction-box {
+            background-color: rgba(2, 132, 199, 0.1);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 12px;
+            border-radius: 0 6px 6px 0;
+            font-size: 0.83rem;
+            color: #e2e8f0;
+            line-height: 1.4;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 6px;
+        }
+
+        select {
+            width: 100%;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        select:focus {
+            border-color: var(--accent-cyan);
+        }
+
+        /* Main Content Workspace */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-main);
+            overflow-y: auto;
+        }
+
+        .header-bar {
+            height: 60px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            background-color: #0f172a;
+        }
+
+        .header-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .progress-counter {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            background: var(--bg-card);
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .workspace-body {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            flex: 1;
+        }
+
+        /* Topology Visualizer */
+        .topology-container {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 24px;
+            position: relative;
+        }
+
+        .topology-grid {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .topology-column {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            align-items: center;
+            flex: 1;
+        }
+
+        .column-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+
+        .topology-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .topology-line {
+            stroke: var(--border-color);
+            stroke-width: 2;
+            stroke-dasharray: 4;
+        }
+
+        /* SVG Hotspot Node Cards */
+        .device-card {
+            background-color: #0f172a;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px 16px;
+            width: 180px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+
+        .device-card:hover {
+            border-color: var(--accent-cyan);
+            background-color: var(--bg-card-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px -3px rgba(56, 189, 248, 0.2);
+        }
+
+        .device-card.active {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.4);
+        }
+
+        .device-card.target {
+            border-color: rgba(248, 113, 113, 0.5);
+        }
+
+        .device-card.target:hover {
+            border-color: var(--accent-red);
+            box-shadow: 0 8px 15px -3px rgba(248, 113, 113, 0.2);
+        }
+
+        .device-svg-icon {
+            width: 65px;
+            height: 50px;
+            margin-bottom: 8px;
+        }
+
+        .device-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .device-ip {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: monospace;
+            margin-top: 2px;
+        }
+
+        /* Full Width Terminal Console */
+        .terminal-container {
+            background-color: var(--term-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            min-height: 260px;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8);
+        }
+
+        .terminal-header {
+            background-color: #0f172a;
+            border-bottom: 1px solid var(--border-color);
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .terminal-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .dot-red { background-color: #ef4444; }
+        .dot-yellow { background-color: #f59e0b; }
+        .dot-green { background-color: #10b981; }
+
+        .terminal-title {
+            font-size: 0.75rem;
+            font-family: monospace;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .terminal-body {
+            padding: 16px;
+            font-family: "Consolas", "Courier New", Courier, monospace;
+            font-size: 0.9rem;
+            line-height: 1.45;
+            color: var(--accent-green);
+            white-space: pre-wrap;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* Footer Controls */
+        .footer-bar {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-color);
+            background-color: #0f172a;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: auto;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-card);
+            border-color: var(--border-color);
+            color: var(--text-main);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--bg-card-hover);
+        }
+
+        .btn-primary {
+            background-color: var(--accent-blue);
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            background-color: #0369a1;
+        }
+
+        /* Evaluation Modal Backdrop & Box */
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(3, 7, 18, 0.8);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-box {
+            background: var(--modal-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            width: 680px;
+            max-width: 92vw;
+            max-height: 88vh;
+            overflow-y: auto;
+            padding: 28px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        .modal-box h2 {
+            font-size: 1.25rem;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .modal-box h3 {
+            font-size: 1.05rem;
+            margin: 18px 0 8px 0;
+            color: var(--accent-cyan);
+        }
+
+        .modal-box p {
+            font-size: 0.9rem;
+            color: #cbd5e1;
+            margin-bottom: 10px;
+        }
+
+        .modal-box hr {
+            border: 0;
+            height: 1px;
+            background: var(--border-color);
+            margin: 16px 0;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .eval-success h2 { color: #34d399; }
+        .eval-error h2 { color: #f87171; }
+    </style>
+</head>
+<body>
+
+<!-- Global SVG Defs for High-Detail Topology Components -->
+<svg style="display: none;">
+    <defs>
+        <linearGradient id="serverGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#334155"/>
+            <stop offset="100%" stop-color="#0f172a"/>
+        </linearGradient>
+        <linearGradient id="screenGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#38bdf8"/>
+            <stop offset="100%" stop-color="#0284c7"/>
+        </linearGradient>
+
+        <!-- Workstation PC Icon -->
+        <g id="pcGraphic">
+            <rect x="5" y="5" width="50" height="34" rx="4" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+            <rect x="8" y="8" width="44" height="28" rx="2" fill="url(#screenGrad)"/>
+            <path d="M 10 32 L 25 20 L 35 28 L 50 18" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.6"/>
+            <path d="M 26 39 L 34 39 L 36 44 L 24 44 Z" fill="#475569"/>
+            <rect x="20" y="44" width="20" height="3" rx="1" fill="#334155"/>
+        </g>
+
+        <!-- Proxy / Server Graphic -->
+        <g id="serverGraphic">
+            <rect x="0" y="0" width="60" height="45" rx="5" fill="url(#serverGrad)" stroke="#475569" stroke-width="2"/>
+            <rect x="5" y="6" width="50" height="10" rx="2" fill="#1e293b" stroke="#334155"/>
+            <rect x="5" y="20" width="50" height="10" rx="2" fill="#1e293b" stroke="#334155"/>
+            <rect x="5" y="34" width="50" height="6" rx="1" fill="#1e293b" stroke="#334155"/>
+            <circle cx="48" cy="11" r="1.5" fill="#38bdf8"/>
+            <circle cx="48" cy="25" r="1.5" fill="#22c55e"/>
+        </g>
+
+        <!-- Target Globe Icon -->
+        <g id="targetGraphic">
+            <circle cx="30" cy="25" r="22" fill="#1e293b" stroke="#f87171" stroke-width="2"/>
+            <circle cx="30" cy="25" r="14" fill="none" stroke="#f87171" stroke-width="1.5" stroke-dasharray="3,3"/>
+            <circle cx="30" cy="25" r="4" fill="#f87171"/>
+        </g>
+    </defs>
+</svg>
+
+<div class="app-container">
+    <!-- Left Sidebar -->
+    <div class="sidebar">
+        <span class="badge">CySA+ CS0-004 PBQ</span>
+        <h1>Botnet Incident Response Lab</h1>
+
+        <div class="sidebar-section">
+            <div class="sidebar-title">Scenario Brief</div>
+            <p>Intrusion alerts indicate an external target (203.0.113.50) is experiencing a high-volume DoS attack originating from your internal network, passing through the Proxy Server.</p>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="instruction-box">
+                <strong>Instructions:</strong> Click on each device node to establish an SSH diagnostic terminal session. Analyze the CLI logs to identify the compromised host, then select your audit remediation plan below.
+            </div>
+        </div>
+
+        <!-- Audit Form Controls -->
+        <div class="sidebar-section">
+            <div class="sidebar-title">Incident Audit Controls</div>
+            
+            <div class="form-group">
+                <label for="infected_host">1. Compromised Device ID:</label>
+                <select id="infected_host">
+                    <option value="none">-- Select Infected Device --</option>
+                    <option value="hostA">Host-A (192.168.1.10)</option>
+                    <option value="hostB">Host-B (192.168.1.20)</option>
+                    <option value="proxy">Proxy Server (10.0.0.5)</option>
+                    <option value="web">Web Server (10.0.0.10)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="remediation">2. Immediate Containment Action:</label>
+                <select id="remediation">
+                    <option value="none">-- Select Containment Strategy --</option>
+                    <option value="proxy_cache">Clear Proxy Server cache & restart service</option>
+                    <option value="isolate_host">Isolate infected host at access switch port</option>
+                    <option value="block_inbound">Block inbound traffic from 203.0.113.50 at edge firewall</option>
+                    <option value="reimage_proxy">Take Proxy Server offline for immediate reimaging</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Workspace -->
+    <div class="main-content">
+        <div class="header-bar">
+            <div class="header-title">Live Diagnostic Environment</div>
+            <div class="progress-counter" id="inspection-counter">Nodes Inspected: 0 / 5</div>
+        </div>
+
+        <div class="workspace-body">
+            <!-- Topology Panel -->
+            <div class="topology-container">
+                <svg class="topology-svg">
+                    <line x1="18%" y1="25%" x2="50%" y2="25%" class="topology-line" />
+                    <line x1="18%" y1="75%" x2="50%" y2="25%" class="topology-line" />
+                    <line x1="50%" y1="25%" x2="82%" y2="50%" class="topology-line" />
+                    <line x1="50%" y1="75%" x2="50%" y2="25%" class="topology-line" />
+                </svg>
+
+                <div class="topology-grid">
+                    <!-- Column 1: Internal Workstations -->
+                    <div class="topology-column">
+                        <div class="column-label">Internal Workstations</div>
+                        <div class="device-card" id="card-hostA" onclick="runCLI('hostA')">
+                            <svg class="device-svg-icon" viewBox="0 0 60 50"><use href="#pcGraphic"/></svg>
+                            <div class="device-name">Host-A</div>
+                            <div class="device-ip">192.168.1.10</div>
+                        </div>
+                        <div class="device-card" id="card-hostB" onclick="runCLI('hostB')">
+                            <svg class="device-svg-icon" viewBox="0 0 60 50"><use href="#pcGraphic"/></svg>
+                            <div class="device-name">Host-B</div>
+                            <div class="device-ip">192.168.1.20</div>
+                        </div>
+                    </div>
+
+                    <!-- Column 2: DMZ Servers -->
+                    <div class="topology-column">
+                        <div class="column-label">DMZ Network</div>
+                        <div class="device-card" id="card-proxy" onclick="runCLI('proxy')">
+                            <svg class="device-svg-icon" viewBox="0 0 60 50"><use href="#serverGraphic"/></svg>
+                            <div class="device-name">Proxy Server</div>
+                            <div class="device-ip">10.0.0.5</div>
+                        </div>
+                        <div class="device-card" id="card-web" onclick="runCLI('web')">
+                            <svg class="device-svg-icon" viewBox="0 0 60 50"><use href="#serverGraphic"/></svg>
+                            <div class="device-name">Web Server</div>
+                            <div class="device-ip">10.0.0.10</div>
+                        </div>
+                    </div>
+
+                    <!-- Column 3: External Target -->
+                    <div class="topology-column">
+                        <div class="column-label">External Boundary</div>
+                        <div class="device-card target" id="card-target" onclick="runCLI('target')">
+                            <svg class="device-svg-icon" viewBox="0 0 60 50"><use href="#targetGraphic"/></svg>
+                            <div class="device-name">Target IP</div>
+                            <div class="device-ip">203.0.113.50</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Terminal Window -->
+            <div class="terminal-container">
+                <div class="terminal-header">
+                    <div class="terminal-dots">
+                        <div class="dot dot-red"></div>
+                        <div class="dot dot-yellow"></div>
+                        <div class="dot dot-green"></div>
+                    </div>
+                    <div class="terminal-title" id="terminal-title">SSH CONSOLE: DISCONNECTED</div>
+                </div>
+                <pre class="terminal-body" id="cli-output">> Diagnostic terminal initialized.
+> Click on any device node above to run remote diagnostic commands...</pre>
+            </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="footer-bar">
+            <button class="btn btn-secondary" onclick="resetSimulation()">Reset Session & Randomize Fault</button>
+            <button class="btn btn-primary" onclick="submitAssessment()">Submit Audit Findings</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Overlay for Diagnostic Feedback -->
+<div class="modal-backdrop" id="resultsModal">
+    <div class="modal-box" id="modalBox">
+        <h2 id="modalHeader">Audit Evaluation</h2>
+        <div id="evaluationLog"></div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" onclick="closeModal()">Close Evaluation</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Session state holding randomized fault data
+    let sessionState = {
+        infectedHost: 'hostB',
+        infectedIP: '192.168.1.20',
+        cleanHost: 'hostA',
+        cleanIP: '192.168.1.10',
+        inspectedNodes: new Set()
+    };
+
+    // Randomizes which host is infected on reset/init
+    function randomizeSession() {
+        const isHostAInfected = Math.random() < 0.5;
+        if (isHostAInfected) {
+            sessionState.infectedHost = 'hostA';
+            sessionState.infectedIP = '192.168.1.10';
+            sessionState.cleanHost = 'hostB';
+            sessionState.cleanIP = '192.168.1.20';
+        } else {
+            sessionState.infectedHost = 'hostB';
+            sessionState.infectedIP = '192.168.1.20';
+            sessionState.cleanHost = 'hostA';
+            sessionState.cleanIP = '192.168.1.10';
+        }
+        sessionState.inspectedNodes.clear();
+    }
+
+    // Dynamic CLI Log Data Generator based on active Session State
+    function getCliData(deviceId) {
+        if (deviceId === sessionState.infectedHost) {
+            const hostName = deviceId === 'hostA' ? 'host-A' : 'host-B';
+            return `> ssh admin@${sessionState.infectedIP}
+Authentication successful.
+admin@${hostName}:~$ netstat -an | grep SYN_SENT
+tcp        0      1 ${sessionState.infectedIP}:53123      203.0.113.50:80         SYN_SENT
+tcp        0      1 ${sessionState.infectedIP}:53124      203.0.113.50:80         SYN_SENT
+tcp        0      1 ${sessionState.infectedIP}:53125      203.0.113.50:80         SYN_SENT
+tcp        0      1 ${sessionState.infectedIP}:53126      203.0.113.50:80         SYN_SENT
+tcp        0      1 ${sessionState.infectedIP}:53127      203.0.113.50:80         SYN_SENT
+[... Output truncated ... 8,448 lines omitted]
+admin@${hostName}:~$ netstat -s | grep "connections"
+    8452 active connections openings
+admin@${hostName}:~$ exit
+Connection closed.`;
+        }
+        if (deviceId === sessionState.cleanHost) {
+            const hostName = deviceId === 'hostA' ? 'host-A' : 'host-B';
+            return `> ssh admin@${sessionState.cleanIP}
+Authentication successful.
+admin@${hostName}:~$ netstat -an | grep ESTABLISHED
+tcp        0      0 ${sessionState.cleanIP}:49213      104.18.32.45:443        ESTABLISHED
+tcp        0      0 ${sessionState.cleanIP}:50111      20.45.1.1:443           ESTABLISHED
+admin@${hostName}:~$ netstat -s | grep "active connections"
+    12 active connections openings
+admin@${hostName}:~$ exit
+Connection closed.`;
+        }
+        if (deviceId === 'proxy') {
+            return `> ssh admin@10.0.0.5
+Authentication successful.
+admin@proxy:~$ tail -n 8 /var/log/squid/access.log
+1726054811.112      1 ${sessionState.infectedIP} TCP_MISS/200 203.0.113.50
+1726054811.113      1 ${sessionState.infectedIP} TCP_MISS/200 203.0.113.50
+1726054811.113      1 ${sessionState.infectedIP} TCP_MISS/200 203.0.113.50
+1726054811.114      1 ${sessionState.infectedIP} TCP_MISS/200 203.0.113.50
+1726054811.114      1 ${sessionState.infectedIP} TCP_MISS/200 203.0.113.50
+[WARNING] High volume of connection requests from ${sessionState.infectedIP} detected.
+admin@proxy:~$ exit
+Connection closed.`;
+        }
+        if (deviceId === 'web') {
+            return `> ssh admin@10.0.0.10
+Authentication successful.
+admin@web:~$ tail -n 5 /var/log/nginx/access.log
+192.168.1.5 - - [11/Sep/2026:14:22:01] "GET /index.html HTTP/1.1" 200
+10.0.0.5 - - [11/Sep/2026:14:25:11] "GET /images/logo.png HTTP/1.1" 200
+admin@web:~$ htop -n 1
+CPU Load: [||        1.2%]
+Tasks: 42, 120 thr; 1 running
+admin@web:~$ exit
+Connection closed.`;
+        }
+        if (deviceId === 'target') {
+            return `> ping -c 4 203.0.113.50
+PING 203.0.113.50 (203.0.113.50) 56(84) bytes of data.
+--- 203.0.113.50 ping statistics ---
+4 packets transmitted, 0 received, 100% packet loss, time 3071ms
+
+> curl -I http://203.0.113.50
+curl: (28) Connection timed out after 10001 milliseconds`;
+        }
+    }
+
+    function runCLI(deviceId) {
+        document.querySelectorAll('.device-card').forEach(card => card.classList.remove('active'));
+        document.getElementById(`card-${deviceId}`).classList.add('active');
+
+        sessionState.inspectedNodes.add(deviceId);
+        document.getElementById('inspection-counter').innerText = `Nodes Inspected: ${sessionState.inspectedNodes.size} / 5`;
+
+        const outputEl = document.getElementById('cli-output');
+        const titleEl = document.getElementById('terminal-title');
+
+        titleEl.innerText = `CONNECTING TO ${deviceId.toUpperCase()}...`;
+        outputEl.style.color = '#94a3b8';
+        outputEl.innerText = "> Establishing SSH socket session...";
+
+        setTimeout(() => {
+            titleEl.innerText = `TERMINAL SESSION: ${deviceId.toUpperCase()}`;
+            outputEl.style.color = '#4ade80';
+            outputEl.innerText = getCliData(deviceId);
+        }, 300);
+    }
+
+    function submitAssessment() {
+        const host = document.getElementById('infected_host').value;
+        const remediation = document.getElementById('remediation').value;
+        const modalBox = document.getElementById('modalBox');
+
+        if (host === 'none' || remediation === 'none') {
+            alert("Please select an option for both control dropdowns before submitting.");
+            return;
+        }
+
+        let isHostCorrect = (host === sessionState.infectedHost);
+        let isRemediationCorrect = (remediation === 'isolate_host');
+        let feedbackHTML = "";
+
+        // 1. Evaluate Host Choice
+        feedbackHTML += "<h3>1. Compromised Device Findings</h3>";
+        if (isHostCorrect) {
+            const correctName = sessionState.infectedHost === 'hostA' ? 'Host-A' : 'Host-B';
+            feedbackHTML += `<p>✅ <strong>Correct Host (${correctName}).</strong><br>Terminal logs confirm ${correctName} (${sessionState.infectedIP}) has generated over 8,000 active connections stuck in a <code>SYN_SENT</code> state targeting 203.0.113.50. This confirms an active outbound TCP SYN flood attack.</p>`;
+        } else {
+            feedbackHTML += "<p>❌ <strong>Incorrect Device.</strong><br><strong>Diagnostic Reasoning:</strong> ";
+            if (host === sessionState.cleanHost) {
+                const cleanName = sessionState.cleanHost === 'hostA' ? 'Host-A' : 'Host-B';
+                feedbackHTML += `${cleanName} (${sessionState.cleanIP}) shows only 12 standard ESTABLISHED connections. Its traffic profile is baseline and operational.`;
+            } else if (host === 'proxy') {
+                feedbackHTML += `The Proxy Server log indicates it is forwarding high-volume traffic originating from ${sessionState.infectedIP}. The proxy is a transit node, not the compromised origin.`;
+            } else if (host === 'web') {
+                feedbackHTML += "The Web Server logs show normal HTTP requests with negligible CPU load. It is unrelated to the attack.";
+            }
+            feedbackHTML += "</p>";
+        }
+
+        // 2. Evaluate Remediation Choice
+        feedbackHTML += "<h3>2. Containment Strategy Findings</h3>";
+        if (isRemediationCorrect) {
+            feedbackHTML += "<p>✅ <strong>Correct Containment (Isolate Host).</strong><br>Isolating the infected endpoint at the access switch port halts malicious outbound packets immediately, stops lateral malware movement, preserves host RAM memory for forensic collection, and maintains proxy operations for remaining staff.</p>";
+        } else {
+            feedbackHTML += "<p>❌ <strong>Incorrect Containment.</strong><br><strong>Diagnostic Reasoning:</strong> ";
+            if (remediation === 'proxy_cache') {
+                feedbackHTML += "Clearing proxy cache has zero impact on active TCP SYN sockets. Restarting the service unnecessarily disrupts outbound internet access for legitimate users.";
+            } else if (remediation === 'block_inbound') {
+                feedbackHTML += "Blocking inbound traffic from the external target fails because the attack is outbound. The compromised host remains active on the network.";
+            } else if (remediation === 'reimage_proxy') {
+                feedbackHTML += "Reimaging the proxy server creates a self-inflicted enterprise outage while leaving the actual compromised host operational.";
+            }
+            feedbackHTML += "</p>";
+        }
+
+        // Apply Overall Score Banner
+        if (isHostCorrect && isRemediationCorrect) {
+            modalBox.className = 'modal-box eval-success';
+            document.getElementById('modalHeader').innerText = "🏆 Perfect Score: Threat Contained";
+        } else {
+            modalBox.className = 'modal-box eval-error';
+            document.getElementById('modalHeader').innerText = "⚠️ Audit Findings Incorrect";
+            const correctHostName = sessionState.infectedHost === 'hostA' ? 'Host-A (192.168.1.10)' : 'Host-B (192.168.1.20)';
+            feedbackHTML += `<hr><p><strong>Correct Answer:</strong> The infected host was <strong>${correctHostName}</strong> and the proper action was to <strong>Isolate the host at the access layer switch</strong>.</p>`;
+        }
+
+        document.getElementById('evaluationLog').innerHTML = feedbackHTML;
+        document.getElementById('resultsModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('resultsModal').style.display = 'none';
+    }
+
+    function resetSimulation() {
+        randomizeSession();
+        document.getElementById('infected_host').value = 'none';
+        document.getElementById('remediation').value = 'none';
+        document.querySelectorAll('.device-card').forEach(card => card.classList.remove('active'));
+        
+        document.getElementById('inspection-counter').innerText = 'Nodes Inspected: 0 / 5';
+
+        const outputEl = document.getElementById('cli-output');
+        const titleEl = document.getElementById('terminal-title');
+        
+        titleEl.innerText = "SSH CONSOLE: DISCONNECTED";
+        outputEl.style.color = '#4ade80';
+        outputEl.innerText = "> Diagnostic session reset & fault randomized.\n> Click on any device node above to run remote diagnostic commands...";
+
+        closeModal();
+    }
+
+    // Initialize randomized fault on load
+    window.onload = function() {
+        randomizeSession();
+    };
+</script>
+
+</body>
+</html>

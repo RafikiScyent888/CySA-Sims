@@ -33,6 +33,8 @@ Open `index.html` to see the dashboard. Each tile launches one interactive simul
 | Incident Kill Chain Analysis | Full SOC analyst kill chain investigation |
 | Log Correlation: Phishing to C2 | Correlate logs from phish to beaconing |
 | Web Exploitation & Data Exposure | Directory traversal & data exposure investigation |
+| Environmental SLA Evaluation | Apply SLA tiers and environment exceptions to find the asset due in 3, 7 or 14 days |
+| Botnet Incident Response Lab | Find the host behind an outbound SYN flood and choose the containment action |
 
 Several simulations include a PDF or JPG answer key (kept alongside the simulation's HTML
 file) for instructor review.
@@ -89,6 +91,8 @@ SOC Analyst Simulation - Endpoint Behavioral Analysis Simulation - Process & Per
 SOC Analyst Simulation - Incident Kill Chain Analysis/
 SOC Analyst Simulation - Log Correlation - Phishing to C2/
 SOC Analyst Simulation - Web Exploitation, Directory Traversal & Data Exposure/
+Environmental SLA Evaluation.html
+Botnet Incident Response Lab.html
 *_Answer_Key*.pdf / *.jpg                    ← instructor answer keys
 ```
 
