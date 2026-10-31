@@ -35,6 +35,7 @@ Open `index.html` to see the dashboard. Each tile launches one interactive simul
 | Web Exploitation & Data Exposure | Directory traversal & data exposure investigation |
 | Environmental SLA Evaluation | Apply SLA tiers and environment exceptions to find the asset due in 3, 7 or 14 days |
 | Botnet Incident Response Lab | Find the host behind an outbound SYN flood and choose the containment action |
+| Real-World Log Analysis Lab | Read 21 vendor logs (firewall, Zeek, Sysmon, Windows, Linux, Suricata, Azure AD, email) and name the indicator of malicious activity; instructor guide PDF alongside |
 
 Several simulations include a PDF or JPG answer key (kept alongside the simulation's HTML
 file) for instructor review.
@@ -93,6 +94,8 @@ SOC Analyst Simulation - Log Correlation - Phishing to C2/
 SOC Analyst Simulation - Web Exploitation, Directory Traversal & Data Exposure/
 Environmental SLA Evaluation.html
 Botnet Incident Response Lab.html
+CySA_Log_Analysis.html
+CySA_Log_Analysis_-_Instructor_Guide.pdf     ← instructor guide for the log analysis lab
 *_Answer_Key*.pdf / *.jpg                    ← instructor answer keys
 ```
 

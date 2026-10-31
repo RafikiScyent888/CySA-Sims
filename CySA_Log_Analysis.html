@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CySA+ (CS0-003) Real-World Malicious Log Analysis Lab</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                        },
+                        terminal: {
+                            bg: '#020617',
+                            border: '#1e293b',
+                            text: '#38bdf8',
+                            code: '#4ade80'
+                        }
+                    },
+                    fontFamily: {
+                        mono: ['Consolas', 'Monaco', 'Courier New', 'monospace'],
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom scrollbar styling for compact fit-to-screen dashboard */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #020617;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden text-slate-100 font-sans flex flex-col bg-slate-950 selection:bg-sky-500 selection:text-slate-950">
+
+    <!-- Top Compact Header Bar -->
+    <header class="h-14 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between shrink-0 z-20">
+        <div class="flex items-center space-x-3">
+            <div class="bg-sky-500/10 border border-sky-500/30 p-1.5 rounded-lg text-sky-400">
+                <i class="fa-solid fa-terminal text-lg"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-sm sm:text-base text-white leading-none">CySA+ Real-World Log Analysis Lab</h1>
+                <p class="text-[11px] text-sky-400 font-medium mt-0.5">CS0-003 Objective 1.2: Analyzing Indicators of Malicious Activity (Authentic Vendor Telemetry)[cite: 1]</p>
+            </div>
+        </div>
+
+        <!-- Right Side Progress & Controls -->
+        <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-4 bg-slate-950/80 px-3 py-1 rounded-lg border border-slate-800 text-xs">
+                <div>
+                    <span class="text-slate-400">Progress:</span>
+                    <span id="stat-progress" class="font-bold text-sky-400 ml-1">0 / 21</span>
+                </div>
+                <div class="h-4 w-px bg-slate-800"></div>
+                <div>
+                    <span class="text-slate-400">Score:</span>
+                    <span id="stat-score" class="font-bold text-emerald-400 ml-1">0 / 0 (0%)</span>
+                </div>
+            </div>
+            <button onclick="resetLab()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 rounded text-xs font-semibold transition flex items-center gap-1.5">
+                <i class="fa-solid fa-rotate-right"></i> Reset Lab
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Viewport: Fixed 3-Column Layout (Fit to Screen 100vh) -->
+    <div class="flex-1 flex overflow-hidden">
+        
+        <!-- Left Panel: Scenario Navigation Sidebar -->
+        <aside class="w-72 bg-slate-900/90 border-r border-slate-800 flex flex-col shrink-0">
+            <!-- Sidebar Header & Filter -->
+            <div class="p-2.5 border-b border-slate-800 space-y-2">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-xs text-slate-500"></i>
+                    <input type="text" id="search-input" placeholder="Search ticket # or vendor..." 
+                        class="w-full bg-slate-950 border border-slate-700 rounded pl-7 pr-2 py-1 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500">
+                </div>
+                <div class="flex gap-1 text-[11px]">
+                    <button onclick="filterCategory('all')" class="cat-filter-btn flex-1 py-1 rounded bg-sky-600 text-white font-medium text-center" data-cat="all">All (21)</button>
+                    <button onclick="filterCategory('Network')" class="cat-filter-btn flex-1 py-1 rounded bg-slate-800 text-slate-400 text-center hover:bg-slate-700" data-cat="Network">Network</button>
+                    <button onclick="filterCategory('Endpoint')" class="cat-filter-btn flex-1 py-1 rounded bg-slate-800 text-slate-400 text-center hover:bg-slate-700" data-cat="Endpoint">System</button>
+                    <button onclick="filterCategory('Identity')" class="cat-filter-btn flex-1 py-1 rounded bg-slate-800 text-slate-400 text-center hover:bg-slate-700" data-cat="Identity">IAM</button>
+                </div>
+            </div>
+
+            <!-- Scenario Items List -->
+            <nav id="scenario-nav" class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
+                <!-- Populated dynamically -->
+            </nav>
+        </aside>
+
+        <!-- Center Panel: Terminal & Assessment Quiz -->
+        <section class="flex-1 flex flex-col bg-slate-950 border-r border-slate-800 overflow-hidden">
+            
+            <!-- Ticket Info Header -->
+            <div class="bg-slate-900 px-4 py-2.5 border-b border-slate-800 flex items-center justify-between shrink-0">
+                <div class="flex items-center space-x-2">
+                    <span id="ticket-badge" class="bg-sky-500/20 text-sky-400 border border-sky-500/30 text-xs font-mono font-bold px-2 py-0.5 rounded">
+                        INC-1001
+                    </span>
+                    <h2 id="scenario-title" class="text-sm font-bold text-slate-100 truncate max-w-md">Security Incident Event Telemetry</h2>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button id="btn-prev" onclick="navigateScenario(-1)" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs font-medium border border-slate-700 disabled:opacity-40">
+                        <i class="fa-solid fa-chevron-left"></i> Prev
+                    </button>
+                    <button id="btn-next" onclick="navigateScenario(1)" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs font-medium border border-slate-700 disabled:opacity-40">
+                        Next <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Scrollable Center Workspace -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4">
+                
+                <!-- Incident Summary / Context -->
+                <div class="bg-slate-900/60 border border-slate-800 rounded-lg p-3 text-xs text-slate-300 leading-relaxed">
+                    <span class="font-semibold text-sky-400 uppercase tracking-wide block mb-1"><i class="fa-solid fa-user-shield mr-1"></i> Tier-2 Analyst Telemetry Brief:</span>
+                    <span id="scenario-description">Loading ticket description...</span>
+                </div>
+
+                <!-- Log Console Terminal Window -->
+                <div class="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden shadow-xl">
+                    <div class="bg-slate-900 px-3 py-1.5 border-b border-slate-800 flex items-center justify-between text-xs text-slate-400">
+                        <div class="flex items-center space-x-1.5 font-mono">
+                            <span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+                            <span id="log-type-label" class="ml-2 text-slate-300">Raw Telemetry Log Console</span>
+                        </div>
+                        <button onclick="copyLogToClipboard()" class="hover:text-sky-400 transition text-[11px] flex items-center gap-1">
+                            <i class="fa-regular fa-copy"></i> Copy Raw Log
+                        </button>
+                    </div>
+                    <div class="bg-terminal-bg p-3 overflow-x-auto custom-scrollbar">
+                        <pre id="log-content" class="font-mono text-xs text-terminal-code leading-normal whitespace-pre font-normal"></pre>
+                    </div>
+                </div>
+
+                <!-- Questions and Options Grid -->
+                <div class="bg-slate-900/80 border border-slate-800 rounded-lg p-3.5 space-y-3">
+                    <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-sky-400"></i> Identify the Primary Threat / Malicious Situation:
+                    </h3>
+
+                    <div id="options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <!-- Dynamically populated options -->
+                    </div>
+
+                    <div class="pt-1 flex items-center justify-between">
+                        <button id="submit-btn" onclick="submitAnswer()" class="w-full py-2 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded text-xs transition disabled:opacity-40 disabled:cursor-not-allowed">
+                            Submit Threat Assessment
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Feedback Outcome Box -->
+                <div id="feedback-card" class="hidden rounded-lg border p-3 text-xs transition-all">
+                    <div class="flex items-start space-x-2.5">
+                        <div id="feedback-icon" class="text-lg pt-0.5"></div>
+                        <div class="space-y-1">
+                            <h4 id="feedback-status" class="font-bold"></h4>
+                            <p id="explanation-text" class="text-slate-300 leading-relaxed"></p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Right Panel: Deep-Dive Line-by-Line Log Analyst Breakdown -->
+        <aside class="w-[430px] bg-slate-900/90 border-l border-slate-800 flex flex-col shrink-0 overflow-hidden">
+            <!-- Inspector Header -->
+            <div class="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-900">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-microscope text-sky-400 text-sm"></i>
+                    <h3 class="text-xs font-bold text-white uppercase tracking-wider">Forensic Field Inspector</h3>
+                </div>
+                <button id="toggle-hint-btn" onclick="toggleHintBreakdown()" class="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 rounded text-[11px] font-semibold transition">
+                    <i class="fa-solid fa-lightbulb"></i> Show Analyst Hint & Line Breakdown
+                </button>
+            </div>
+
+            <!-- Inspector Content Area -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-3">
+                
+                <!-- Initial Placeholder / Instructions -->
+                <div id="hint-placeholder" class="text-center py-12 px-4 space-y-3 text-slate-500">
+                    <i class="fa-solid fa-magnifying-glass-chart text-4xl text-slate-700"></i>
+                    <p class="text-xs">Click <strong>"Show Analyst Hint & Line Breakdown"</strong> above to inspect raw vendor fields, parameters, Event IDs, and MITRE ATT&CK technique mappings for this scenario.</p>
+                </div>
+
+                <!-- Line-by-Line Breakdown Container (Hidden by default) -->
+                <div id="breakdown-wrapper" class="hidden space-y-3">
+                    <div class="bg-amber-500/10 border border-amber-500/30 rounded p-2.5 text-xs text-amber-200 leading-relaxed">
+                        <span class="font-bold block text-amber-400 mb-0.5"><i class="fa-solid fa-lightbulb"></i> Analyst Strategy Lead:</span>
+                        <span id="hint-text">Loading hint...</span>
+                    </div>
+
+                    <div class="space-y-3">
+                        <h4 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <i class="fa-solid fa-terminal text-sky-400"></i> Field-by-Field Vendor Dissection:
+                        </h4>
+                        <div id="line-breakdown-list" class="space-y-3">
+                            <!-- Dynamically generated line-by-line breakdown cards -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+
+    </div>
+
+    <!-- Application Script & Data Store -->
+    <script>
+        const scenarios = [
+            {
+                id: 1,
+                ticket: "INC-8102",
+                title: "Palo Alto NGFW Flow Telemetry",
+                category: "Network",
+                logType: "Palo Alto Networks PAN-OS TRAFFIC Log (Simplified CSV)",
+                description: "Perimeter firewall logging captured a large egress session from an internal staging server targeting an external public IP address.",
+                hint: "Palo Alto TRAFFIC log columns: [Time, Type, SrcIP, DstIP, DstPort, Action, Bytes_Sent, Bytes_Recv]. Calculate the ratio of Bytes_Sent (outbound) vs Bytes_Recv (inbound).",
+                log: `FIELD_HEADERS: Time, Log_Type, Src_IP, Dst_IP, Dst_Port, Protocol, Action, Bytes_Sent, Bytes_Recv
+RECORD_1: 2026/10/22 14:23:45, TRAFFIC, 10.0.0.25, 198.51.100.50, 443, tcp, allow, 128848000000, 1018880`,
+                breakdown: [
+                    {
+                        lineNum: 1,
+                        code: "FIELD_HEADERS: Time, Log_Type, Src_IP, Dst_IP, Dst_Port, Protocol, Action, Bytes_Sent, Bytes_Recv",
+                        syntax: "Standard key fields in Palo Alto TRAFFIC flow logs. Identifies session origin, destination port, action taken, and volume transfer counters.",
+                        context: "Defines the structured columns for stateful TCP flow inspection.",
+                        takeaway: "Always check `Bytes_Sent` vs `Bytes_Recv` to determine direction of data flow."
+                    },
+                    {
+                        lineNum: 2,
+                        code: "RECORD_1: 2026/10/22 14:23:45, TRAFFIC, 10.0.0.25, 198.51.100.50, 443, tcp, allow, 128848000000, 1018880",
+                        syntax: "Src_IP: 10.0.0.25, Dst_IP: 198.51.100.50, Dst_Port: 443, Action: allow, Bytes_Sent: 128,848,000,000 (128.8 GB), Bytes_Recv: 1,018,880 (1 MB).",
+                        context: "Outbound bytes sent (128.8 GB) vs inbound received (1 MB) shows a single session consuming massive egress pipeline capacity.",
+                        takeaway: "Key Indicator: Extremely high `Bytes_Sent` (128.8 GB) causing network Bandwidth Consumption."
+                    }
+                ],
+                correctAnswer: "Bandwidth Consumption",
+                distractors: ["Scans/Sweeps", "Rogue Devices on Network", "Processor Consumption"],
+                explanation: "<strong>Bandwidth Consumption:</strong> The PAN-OS TRAFFIC log reveals a single outbound TCP session transmitting over 128 Gigabytes of data (`Bytes_Sent: 128848000000`), saturating enterprise egress bandwidth."
+            },
+            {
+                id: 2,
+                ticket: "INC-2910",
+                title: "Zeek/Bro Connection Telemetry",
+                category: "Network",
+                logType: "Zeek (Bro) conn.log (Tab-Separated Values)",
+                description: "Zeek network security monitor captured recurring outbound SSL/TLS connection attempts from an internal endpoint.",
+                hint: "Examine the `ts` timestamp increments, `id.resp_p` port, `duration`, and `orig_bytes` / `resp_bytes` patterns across the connection log entries.",
+                log: `2026-10-22 09:00:00 UTC	CH3910291	192.168.1.101	49152	104.27.142.32	443	tcp	ssl	3.12	124	412	SF	-	-	0	Dd	1	512	1	780
+2026-10-22 09:05:00 UTC	CH3910292	192.168.1.101	49153	104.27.142.32	443	tcp	ssl	3.08	124	412	SF	-	-	0	Dd	1	512	1	780
+2026-10-22 09:10:00 UTC	CH3910293	192.168.1.101	49154	104.27.142.32	443	tcp	ssl	3.15	124	412	SF	-	-	0	Dd	1	512	1	780
+2026-10-22 09:15:00 UTC	CH3910294	192.168.1.101	49155	104.27.142.32	443	tcp	ssl	3.10	124	412	SF	-	-	0	Dd	1	512	1	780`,
+                breakdown: [
+                    {
+                        lineNum: 1,
+                        code: "2026-10-22 09:00:00 UTC CH3910291 192.168.1.101 49152 104.27.142.32 443 tcp ssl 3.12 124 412 SF...",
+                        syntax: "Zeek fields: timestamp, uid, id.orig_h, id.orig_p, id.resp_h, id.resp_p, proto, service, duration, orig_bytes, resp_bytes, conn_state.",
+                        context: "First outbound SSL/TLS connection established from 192.168.1.101 to external IP 104.27.142.32 port 443 lasting ~3.12s.",
+                        takeaway: "Records initial handshake and short exchange (124 bytes sent, 412 bytes received)."
+                    },
+                    {
+                        lineNum: 2,
+                        code: "2026-10-22 09:05:00 UTC... / 09:10:00 UTC... / 09:15:00 UTC...",
+                        syntax: "Sequential Zeek flow records spaced at exact 300-second (5-minute) intervals.",
+                        context: "Notice the connection timestamps: 09:00:00 -> 09:05:00 -> 09:10:00 -> 09:15:00. Payload sizes (`orig_bytes: 124`, `resp_bytes: 412`) are identical on every connection.",
+                        takeaway: "MITRE ATT&CK T1071.001 (Web Protocols) & T1095: Strict 5-minute mathematical periodicity with static payload sizing is the classic signature of automated C2 Beaconing."
+                    }
+                ],
+                correctAnswer: "Beaconing",
+                distractors: ["Activity on Unexpected Ports", "Social Engineering / Obfuscated Links", "Abnormal OS Process Behavior"],
+                explanation: "<strong>Beaconing:</strong> The Zeek `conn.log` shows an internal host connecting to an external server on port 443 at exact 5-minute intervals with identical byte sizes, characteristic of C2 agent beaconing."
+            },
+            {
+                id: 3,
+                ticket: "INC-3912",
+                title: "Windows Sysmon Event ID 3 Telemetry",
+                category: "Network",
+                logType: "Microsoft-Windows-Sysmon/Operational Event ID 3 (Network Connection)",
+                description: "Endpoint Sysmon auditing recorded direct network socket creation between internal workstation endpoints over SMB file sharing ports.",
+                hint: "Check the source and destination IP addresses, destination port (443/445/139), image name, and user context.",
+                log: `<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+  <System>
+    <Provider Name="Microsoft-Windows-Sysmon" GUID="{57707312-8703-4c93-980f-665f01288b2e}"/>
+    <EventID>3</EventID>
+    <TimeCreated SystemTime="2026-10-22T16:33:08.120492Z"/>
+    <Computer>WKST-DEPT32.corp.internal</Computer>
+  </System>
+  <EventData>
+    <Data Name="UtcTime">2026-10-22 16:33:08.118</Data>
+    <Data Name="ProcessId">4102</Data>
+    <Data Name="Image">C:\\Windows\\System32\\cmd.exe</Data>
+    <Data Name="User">CORP\\jdoe</Data>
+    <Data Name="Protocol">tcp</Data>
+    <Data Name="Initiated">true</Data>
+    <Data Name="SourceIp">10.0.3.12</Data>
+    <Data Name="SourceHostname">WKST-DEPT32.corp.internal</Data>
+    <Data Name="SourcePort">51204</Data>
+    <Data Name="DestinationIp">10.0.3.15</Data>
+    <Data Name="DestinationHostname">WKST-FINANCE01.corp.internal</Data>
+    <Data Name="DestinationPort">445</Data>
+  </EventData>
+</Event>`,
+                breakdown: [
+                    {
+                        lineNum: 1,
+                        code: "<EventID>3</EventID> ... <Computer>WKST-DEPT32.corp.internal</Computer>",
+                        syntax: "Sysmon Event ID 3 signifies a network connection detected on the local host.",
+                        context: "Captured on user workstation WKST-DEPT32 (10.0.3.12).",
+                        takeaway: "Confirms network socket creation logged by Sysmon agent."
+                    },
+                    {
+                        lineNum: 2,
+                        code: "<Data Name=\"Image\">C:\\Windows\\System32\\cmd.exe</Data> ... <Data Name=\"DestinationIp\">10.0.3.15</Data> ... <Data Name=\"DestinationPort\">445</Data>",
+                        syntax: "Process Image, Source IP (10.0.3.12), Target IP (10.0.3.15), Target Port (445 / SMB).",
+                        context: "Command prompt process spawning a direct SMB (Port 445) socket to an adjacent workstation (10.0.3.15) on the same user subnet.",
+                        takeaway: "MITRE ATT&CK T1021.002 (SMB/Windows Admin Shares): Direct client-to-client SMB traffic represents unauthorized lateral peer-to-peer communication."
+                    }
+                ],
+                correctAnswer: "Irregular Peer-to-Peer Communication",
+                distractors: ["Scans/Sweeps", "Unauthorized Scheduled Tasks", "Anomalous Access Activity"],
+                explanation: "<strong>Irregular Peer-to-Peer Communication:</strong> Workstation `10.0.3.12` establishing direct SMB (port 445) connections to peer workstation `10.0.3.15` violates standard enterprise network segmentation."
+            },
+            {
+                id: 4,
+                ticket: "INC-4021",
+                title: "Cisco WLC WIDS Syslog Telemetry",
+                category: "Network",
+                logType: "Cisco Wireless LAN Controller (WLC) Syslog",
+                description: "Wireless Controller event logs generated a warning from an internal Lightweight Access Point sensor in a secure zone.",
+                hint: "Identify the vendor event code `%WLAN-4-ROGUE_AP_DETECTED`, BSSID MAC address, RSSI signal strength, and SSID string.",
+                log: `<132>Oct 22 08:10:55.412 UTC: %WLAN-4-ROGUE_AP_DETECTED: wlc_rogue.c:1402 AP:10.0.4.15[AP-ConfRoomB] Rogue AP 00:11:22:33:44:55 detected on radio type 802.11b/g, channel 6, RSSI -48 dBm, SNR 42, SSID 'Free_Corp_WiFi', Auth: None, Encryption: None`,
+                breakdown: [
+                    {
+                        lineNum: 1,
+                        code: "<132>Oct 22 08:10:55... %WLAN-4-ROGUE_AP_DETECTED: wlc_rogue.c:1402 AP:10.0.4.15[AP-ConfRoomB]...",
+                        syntax: "Syslog Priority <132>, Cisco Facility WLAN, Severity 4 (Warning), Mnemonic %WLAN-4-ROGUE_AP_DETECTED, Reporting AP Name (AP-ConfRoomB).",
+                        context: "Cisco WLC engine triggered a WIDS rule when an internal managed AP detected an unmanaged wireless transmitter RF signal.",
+                        takeaway: "Identifies sensor AP location in Conference Room B detecting external RF signals."
+                    },
+                    {
+                        lineNum: 2,
+                        code: "...Rogue AP 00:11:22:33:44:55 ... RSSI -48 dBm ... SSID 'Free_Corp_WiFi', Auth: None...",
+                        syntax: "BSSID MAC (00:11:22:33:44:55), RSSI (-48 dBm = high proximity), SSID ('Free_Corp_WiFi'), Open Authentication.",
+                        context: "An unapproved physical wireless router/access point broadcasting an unencrypted spoofed corporate SSID near Conference Room B.",
+                        takeaway: "MITRE ATT&CK T1040 (Network Sniffing / Evil Twin): Physical insertion of an unmanaged Rogue Device."
+                    }
+                ],
+                correctAnswer: "Rogue Devices on Network",
+                distractors: ["Unauthorized Software", "Drive Capacity Consumption", "Abnormal OS Process Behavior"],
+                explanation: "<strong>Rogue Devices on Network:</strong> Cisco WLC `%WLAN-4-ROGUE_AP_DETECTED` events log unmanaged wireless access points operating inside corporate RF boundaries."
+            },
+            {
+                id: 5,
+                ticket: "INC-5182",
+                title: "Nginx Web Server Access Log",
+                category: "Network",
+                logType: "Nginx Access Log (Combined Format)",
+                description: "Web server access logs recorded rapid sequential request activity originating from an internal host address.",
+                hint: "Examine the request timestamps, targeted URI paths, status codes (404/200), and User-Agent header string.",
+                log: `192.168.0.12 - - [22/Oct/2026:10:25:19 +0000] "GET /phpmyadmin/ HTTP/1.1" 404 169 "-" "Mozilla/5.0 (Hydra/9.2)"
+192.168.0.12 - - [22/Oct/2026:10:25:19 +0000] "GET /admin/ HTTP/1.1" 404 169 "-" "Mozilla/5.0 (Hydra/9.2)"
+192.168.0.12 - - [22/Oct/2026:10:25:19 +0000] "GET /wp-login.php HTTP/1.1" 404 169 "-" "Mozilla/5.0 (Hydra/9.2)"
+192.168.0.12 - - [22/Oct/2026:10:25:20 +0000] "GET /.env HTTP/1.1" 404 169 "-" "Mozilla/5.0 (Hydra/9.2)"
+192.168.0.12 - - [22/Oct/2026:10:25:20 +0000] "GET /config.json HTTP/1.1" 404 169 "-" "Mozilla/5.0 (Hydra/9.2)"
+192.168.0.12 - - [22/Oct/2026:10:25:20 +0000] "GET /api/v1/debug HTTP/1.1" 404 169 "-" "Mozilla/5.0 (Hydra/9.2)"`,
+                breakdown: [
+                    {
+                        lineNum: 1,
+                        code: "192.168.0.12 - - [22/Oct/2026:10:25:19 +0000] \"GET /phpmyadmin/ HTTP/1.1\" 404 169 \"-\" \"Mozilla/5.0 (Hydra/9.2)\"",
+                        syntax: "Client IP, Auth User, Timestamp, HTTP Request Method/Path, HTTP Status Code (404), Bytes Sent, Referrer, User-Agent Header.",
+                        context: "Source IP 192.168.0.12 requesting well-known administrative endpoints at multiple requests per second.",
+                        takeaway: "Rapid probing of sensitive web paths."
+                    },
+                    {
+                        lineNum: 2,
+                        code: "...User-Agent: Mozilla/5.0 (Hydra/9.2)... GET /wp-login.php / .env / config.json ...",
+                        syntax: "Automated tool User-Agent signature ('Hydra') probing sensitive application configuration paths.",
+                        context: "Automated web path enumeration/fuzzing tool sweeping the web server for exposed management portals.",
+                        takeaway: "MITRE ATT&CK T1595.002 (Active Scanning - Vulnerability Scanning): Directory brute-forcing and vulnerability scanning."
+                    }
+                ],
+                correctAnswer: "Scans/Sweeps",
+                distractors: ["Activity on Unexpected Ports", "Traffic Spikes", "Registry Changes or Anomalies"],
+                explanation: "<strong>Scans/Sweeps:</strong> High-frequency automated HTTP GET requests targeting administrative URIs (`/phpmyadmin/`, `/.env`) with security tools signatures represent Active Scanning."
+            },
+            {
+                id: 6,
+                ticket: "INC-6091",
+                title: "NetFlow v9 Flow Exporter Record",
+                category: "Network",
+                logType: "Cisco NetFlow v9 / IPFIX Collector Record",
+                description: "NetFlow collector logged a sudden, massive surge in UDP datagram throughput directed at internal infrastructure.",
+                hint: "Check the `protocol`, `src_port`, `dst_port` (53), `packets_sent`, and duration metrics.",
+                log: `[NetFlow-v9 Flow Record]
+  Export Time      : 2026-10-22 22:10:32.000 UTC
+  Src IP           : 198.51.100.88
+  Dst IP           : 10.0.1.5
+  Protocol         : 17 (UDP)
+  Src Port         : 53
+  Dst Port         : 53210
+  Packets Sent     : 48,500,000
+  Bytes Sent       : 3,240,000,000 (3.24 GB)
+  Flow Duration    : 45.2 seconds
+  TCP Flags        : 0x00`,
+                breakdown: [
+                    {
+                        lineNum: 1,
+                        code: "Protocol : 17 (UDP) ... Src Port : 53 ... Packets Sent : 48,500,000 ... Bytes Sent : 3,240,000,000 ... Duration : 45.2s",
+                        syntax: "NetFlow v9 metrics: Transport Protocol (17 = UDP), Source Port 53 (DNS), Packet Count (48.5M), Byte Count (3.24 GB), Duration (45.2 seconds).",
+                        context: "48.5 million UDP packets transferred in under 46 seconds (over 1 million packets per second).",
+                        takeaway: "MITRE ATT&CK T1498 (Network Denial of Service): Sudden volumetric Traffic Spike (DNS Amplification DDoS flooding internal IP)."
+                    }
+                ],
+                correctAnswer: "Traffic Spikes",
+                distractors: ["Memory Consumption", "Unauthorized Changes", "Beaconing"],
+                explanation: "<strong>Traffic Spikes:</strong> A sudden transmission of 48.5 million UDP packets (3.24 GB in 45 seconds) represents a severe, sudden Traffic Spike / DDoS event."
+            },
+            {
+                id: 7,
+                ticket: "INC-7102",
+                title: "Palo Alto THREAT Inspection Telemetry",
+                category: "Network",
+                logType: "Palo Alto PAN-OS THREAT Log (Simplified CSV)",
+                description: "Firewall threat inspection engine flagged an internal host communicating over a non-standard port using an unexpected application layer signature.",
+                hint: "Inspect the Palo Alto THREAT log fields: [Time, Type, SrcIP, DstIP, DstPort, Protocol, App_ID, Severity]. Notice the destination port (31337) and App_ID (`backdoor-custom`).",
+                log: `FIELD_HEADERS: Time, Log_Type, Src_IP, Dst_IP, Dst_Port, Protocol, App_ID, Severity
+RECORD_1: 2026/10/22 18:32:14, THREAT, 192.168.100.10, 192.168.200.5, 31337, udp, backdoor-custom, informational`,
+                breakdown: [
+                    {
+                        lineNum: 1,
+                        code: "FIELD_HEADERS: Time, Log_Type, Src_IP, Dst_IP, Dst_Port, Protocol, App_ID, Severity",
+                        syntax: "Palo Alto THREAT log headers detailing time, threat type, source/destination IPs, destination port, transport protocol, Palo Alto App-ID signature, and alert severity.",
+                        context: "Structured fields used by Palo Alto threat prevention engines to classify malicious traffic signatures.",
+                        takeaway: "Focus on App_ID and Dst_Port to identify port abuse."
+                    },
+                    {
+                        lineNum: 2,
+                        code: "RECORD_1: 2026/10/22 18:32:14, THREAT, 192.168.100.10, 192.168.200.5, 31337, udp, backdoor-custom, informational",
+                        syntax: "Src_IP: 192.168.100.10, Dst_IP: 192.168.200.5, Dst_Port: 31337, Protocol: UDP, App_ID: backdoor-custom.",
+                        context: "App-ID signatures detected backdoor command shell traffic running over high UDP port 31337 ('Back Orifice' / elite port).",
+                        takeaway: "MITRE ATT&CK T1571 (Non-Standard Port): Command execution running over an unassigned high port (31337)."
+                    }
+                ],
+                correctAnswer: "Activity on Unexpected Ports",
+                distractors: ["Beaconing", "Unauthorized Software", "Data Exfiltration"],
+                explanation: "<strong>Activity on Unexpected Ports:</strong> Transmitting custom backdoor traffic over unassigned high destination ports (31337) represents Activity on Unexpected Ports."
+            },
+            {
+                id: 8,
+                ticket: "INC-8812",
+                title: "Linux Kernel Top / PS Process Table",
+                category: "Endpoint",
+                logType: "Linux Operating System CLI Process Table (`ps aux`)",
+                description: "System administration tools captured process list output from a Linux production server experiencing severe performance degradation.",
+                hint: "Examine the `%CPU` utilization column, process command path (`xmrig`), and user context (`nobody`).",
+                log: `USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root           1  0.0  0.1 168204 11200 ?        Ss   Oct15   0:12 /sbin/init
+www-data    1102  0.2  0.4 302100 32100 ?        S    10:00   0:02 nginx: worker process
+nobody      4912 99.8  1.2 892100 98200 ?        Rl   14:28  12:45 /tmp/.ice-unix/xmrig -o stratum+tcp://pool.supportxmr.com:3333 -u 48102910... --background
+syslog       812  0.0  0.1  22100  4100 ?        S    Oct15   0:01 /usr/sbin/rsyslogd -n`,
+                breakdown: [
+                    {
+                        lineNum: 1,
+                        code: "nobody 4912 99.8 1.2 892100 98200 ? Rl 14:28 12:45 /tmp/.ice-unix/xmrig -o stratum+tcp://pool.supportxmr.com:3333...",
+                        syntax: "Process User (nobody), PID (4912), %CPU (99.8%), %MEM (1.2%), State (Rl = Running/Locked), Command (/tmp/.ice-unix/xmrig).",
+                        context: "Process `xmrig` executing out of a hidden temp directory (`/tmp/.ice-unix/`), consuming 99.8% of available CPU cores connecting to a Monero mining pool.",
+                        takeaway: "MITRE ATT&CK T1496 (Resource Hijacking): Cryptojacking process causing extreme Processor Consumption."
+                    }
+                ],
+                correctAnswer: "Processor Consumption",
+                distractors: ["Memory Consumption", "Drive Capacity Consumption", "Malicious Processes"],
+                explanation: "<strong>Processor Consumption:</strong> The `ps aux` output shows an unauthorized cryptocurrency miner (`xmrig`) consuming 99.8% CPU, hijacking server processing capacity."
+            },
+            {
+                id: 9,
+                ticket: "INC-9102",
+                title: "Linux Kernel Dmesg / OOM-Killer Telemetry",
+                category: "Endpoint",
+                logType: "Linux Kernel Ring Buffer (`/var/log/dmesg` / `journalctl`)",
+                description: "System kernel logs recorded emergency Out-Of-Memory (OOM) invocation events due to process memory exhaustion.",
+                hint: "Review the kernel message `Out of memory: Kill process`, total virtual memory allocated, and target binary name (`heap_drain`).",
+                log: `[2026-10-22T10:40:33.104291+00:00] kernel: [ 4102.192012] heap_drain invoked oom-killer: gfp_mask=0x100cca(GFP_HIGHUSER_MOVABLE), order=0, oom_score_adj=0
+[2026-10-22T10:40:33.104298+00:00] kernel: [ 4102.192080] CPU: 2 PID: 8812 Comm: heap_drain Not tainted 5.15.0-88-generic #98-Ubuntu
+[2026-10-22T10:40:33.104310+00:00] kernel: [ 4102.192102] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996)
+[2026-10-22T10:40:33.104320+00:00] kernel: [ 4102.192150] Memory cgroup out of memory: Kill process 8812 (heap_drain) score 942 or sacrifice child
+[2026-10-22T10:40:33.104335+00:00] kernel: [ 4102.192210] Out of memory: Killed process 8812 (heap_drain) total-vm:16210412kB, anon-rss:15891204kB, file-rss:1204kB, shmem-rss:0kB`,
+                breakdown: [
+                    {
+                        lineNum: 1,
+                        code: "kernel: ... heap_drain invoked oom-killer ... Memory cgroup out of memory: Kill process 8812 (heap_drain) score 942 ...",
+                        syntax: "Kernel OOM Subsystem log: Triggering process (heap_drain), OOM score (942/1000 = near total system allocation).",
+                        context: "Kernel forced to terminate `heap_drain` binary after it exhausted physical RAM and swap space.",
+                        takeaway: "Process induced critical host system RAM failure."
+                    },
+                    {
+                        lineNum: 2,
+                        code: "... Out of memory: Killed process 8812 (heap_drain) total-vm:16210412kB, anon-rss:15891204kB ...",
+                        syntax: "Virtual Memory Total (16,210,412 kB = ~16.2 GB), Anonymous Resident Set Size (~15.8 GB physical RAM).",
+                        context: "Single process allocated ~15.8 GB of physical RAM, triggering emergency kernel OOM-killer termination.",
+                        takeaway: "Key Indicator: Malicious Memory Consumption causing kernel instability."
+                    }
+                ],
+                correctAnswer: "Memory Consumption",
+                distractors: ["Processor Consumption", "Drive Capacity Consumption", "Service Interruption"],
+                explanation: "<strong>Memory Consumption:</strong> Linux kernel `oom-killer` logs record process `heap_drain` allocating ~16 GB of RAM (`total-vm:16210412kB`), causing system Out-Of-Memory exhaustion."
+            },
+            {
+                id: 10,
+                ticket: "INC-1092",
+                title: "Windows System Event Log ID 2013",
+                category: "Endpoint",
+                logType: "Windows System Event Log / Event ID 2013 (Srv)",
+                description: "Windows System event log generated a storage subsystem warning regarding low disk partition volume availability.",
+                hint: "Check the Event ID (2013), Provider Name (`Srv`), drive partition volume letter (`C:`), and disk space capacity bytes.",
+                log: `<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+  <System>
+    <Provider Name="Srv"/>
+    <EventID>2013</EventID>
+    <Level>3</Level>
+    <TimeCreated SystemTime="2026-10-22T11:25:20.000000000Z"/>
+    <Computer>FILESRV01.corp.internal</Computer>
+  </System>
+  <EventData>
+    <Data Name="Param1">C:</Data>
+    <Data Name="Param2">209715200</Data>
+  </EventData>
+</Event>`,
+                breakdown: [
+                    {
+                        lineNum: 1,
+                        code: "<Provider Name=\"Srv\"/> <EventID>2013</EventID> ... <Data Name=\"Param1\">C:</Data> <Data Name=\"Param2\">209715200</Data>",
+                        syntax: "Windows Event ID 2013 = 'The C: disk is at or near capacity'. Param1 = Volume (C:), Param2 = Bytes Free (209,715,200 bytes = 200 MB).",
+                        context: "System partition C:\\ dropped below emergency threshold with only 200 MB remaining due to rapid log generation.",
+                        takeaway: "MITRE ATT&CK T1499 (Endpoint Denial of Service): Storage partition experiencing critical Drive Capacity Consumption."
+                    }
+                ],
+                correctAnswer: "Drive Capacity Consumption",
+                distractors: ["File System Changes or Anomalies", "Memory Consumption", "Unauthorized Software"],
+                explanation: "<strong>Drive Capacity Consumption:</strong> Windows Event ID 2013 (`Srv`) indicates partition `C:` free space has been depleted down to 200 MB (`209715200` bytes)."
+            },
+            {
+                id: 11,
+                ticket: "INC-1192",
+                title: "AppLocker Policy Event ID 8002",
+                category: "Endpoint",
+                logType: "Microsoft-Windows-AppLocker/EXE and DLL Event ID 8002",
+                description: "Windows AppLocker policy audit logs intercepted an unapproved application binary (`TeamViewer_Desktop.exe`) executing out of a user temp directory.",
+                hint: "Focus on application policy enforcement: AppLocker Event ID 8002 logs execution attempts of unauthorized software binaries in user directories.",
+                log: `<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+  <System>
+    <Provider Name="Microsoft-Windows-AppLocker"/>
+    <EventID>8002</EventID>
+    <TimeCreated SystemTime="2026-10-22T09:32:11.412091Z"/>
+    <Computer>WKST-HR04.corp.internal</Computer>
+  </System>
+  <EventData>
+    <Data Name="PolicyType">EXE</Data>
+    <Data Name="RuleId">{a9102910-1029-4102-8812-991029102910}</Data>
+    <Data Name="RuleName">Default AppLocker Rule - Block User Profile Executables</Data>
+    <Data Name="FilePath">C:\\Users\\mbsmith\\AppData\\Local\\Temp\\TeamViewer_Desktop.exe</Data>
+    <Data Name="User">S-1-5-21-1029102-4102910-881204-1001</Data>
+    <Data Name="Sha256">a184102910291028102910291029102910291029102910291029102910291029</Data>
+  </EventData>
+</Event>`,
+                breakdown: [
+                    {
+                        lineNum: 1,
+                        code: "<EventID>8002</EventID> ... <Data Name=\"FilePath\">C:\\Users\\mbsmith\\AppData\\Local\\Temp\\TeamViewer_Desktop.exe</Data>",
+                        syntax: "AppLocker Event ID 8002 (Executable evaluated against application control policies).",
+                        context: "User `mbsmith` attempted to run unapproved Remote Administration Tool (`TeamViewer_Desktop.exe`) out of `AppData\\Local\\Temp`.",
+                        takeaway: "MITRE ATT&CK T1219 (Remote Access Software): Execution of unapproved Unauthorized Software violating enterprise application control policies."
+                    }
+                ],
+                correctAnswer: "Unauthorized Software",
+                distractors: ["Malicious Processes", "Unauthorized Privileges", "Social Engineering / Obfuscated Links"],
+                explanation: "<strong>Unauthorized Software:</strong> AppLocker Event ID 8002 flags user execution of unapproved remote management binaries (`TeamViewer_Desktop.exe`) in user profile temp directories."
+            },
+            {
+                id: 12,
+                ticket: "INC-1204",
+                title: "Sysmon Event ID 1 Execution Telemetry",
+                category: "Endpoint",
+                logType: "Microsoft-Windows-Sysmon/Operational Event ID 1 (Process Creation)",
+                description: "Sysmon process creation auditing captured a command line shell invoking native system utilities to destroy volume shadow copies.",
+                hint: "Examine the `Image` executable, `CommandLine` arguments (`vssadmin.exe delete shadows /all /quiet`), and `ParentImage`.",
+                log: `<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+  <System>
+    <Provider Name="Microsoft-Windows-Sysmon"/>
+    <EventID>1</EventID>
+    <TimeCreated SystemTime="2026-10-22T13:45:45.812091Z"/>
+    <Computer>WKST-FIN02.corp.internal</Computer>
+  </System>
+  <EventData>
+    <Data Name="ProcessId">8102</Data>
+    <Data Name="Image">C:\\Windows\\System32\\vssadmin.exe</Data>
+    <Data Name="CommandLine">vssadmin.exe delete shadows /all /quiet</Data>
+    <Data Name="CurrentDirectory">C:\\Users\\Public\\Downloads\\</Data>
+    <Data Name="User">NT AUTHORITY\\SYSTEM</Data>
+    <Data Name="ParentImage">C:\\Users\\Public\\Downloads\\cryptor.exe</Data>
+    <Data Name="ParentCommandLine">C:\\Users\\Public\\Downloads\\cryptor.exe --stage2</Data>
+  </EventData>
+</Event>`,
+                breakdown: [
+                    {
+                        lineNum: 1,
+                        code: "<Data Name=\"Image\">C:\\Windows\\System32\\vssadmin.exe</Data> <Data Name=\"CommandLine\">vssadmin.exe delete shadows /all /quiet</Data>",
+                        syntax: "Sysmon Event ID 1: Image, CommandLine, ParentImage (`cryptor.exe`), ParentCommandLine.",
+                        context: "Ransomware binary `cryptor.exe` spawning `vssadmin.exe` with switches `/all /quiet` to permanently destroy backup shadow copies before encrypting files.",
+                        takeaway: "MITRE ATT&CK T1490 (Inhibit System Recovery): Destructive Malicious Processes executing backup inhibition commands."
+                    }
+                ],
+                correctAnswer: "Malicious Processes",
+                distractors: ["Abnormal OS Process Behavior", "Registry Changes or Anomalies", "Unauthorized Changes"],
+                explanation: "<strong>Malicious Processes:</strong> Executables (`cryptor.exe`) invoking `vssadmin.exe delete shadows /all /quiet` represent Malicious Processes executing ransomware inhibition behaviors."
+            },
+            {
+                id: 13,
+                ticket: "INC-1390",
+                title: "Linux Auditd File Modification Telemetry",
+                category: "Endpoint",
+                logType: "Linux Auditd (`/var/log/audit/audit.log`) SYSCALL / PATH Record",
+                description: "Linux system auditing recorded a script executing with administrative root permissions (`uid=0`, `euid=0`) making unauthorized modifications to protected core system network files.",
+                hint: "Examine the target file path (`/etc/hosts`), syscall (`openat` write mode `0441`), and process command (`py_updater`). The script runs as root to alter core DNS configurations.",
+                log: `type=SYSCALL msg=audit(1792587030.812:4102): arch=c000003e syscall=257 success=yes exit=3 a0=ffffff9c a1=7ffd102910 a2=441 a3=1b8 items=2 ppid=1102 pid=4812 auid=1001 uid=0 gid=0 euid=0 exe="/usr/bin/python3" comm="py_updater" key="hosts_mon"
+type=CWD msg=audit(1792587030.812:4102): cwd="/tmp/.meta"
+type=PATH msg=audit(1792587030.812:4102): item=0 name="/etc/hosts" inode=14029 dev=08:01 mode=0100644 ouid=0 ogid=0
+type=PATH msg=audit(1792587030.812:4102): item=1 name="/etc/hosts" inode=14029 dev=08:01 mode=0100644 ouid=0 ogid=0`,
+                breakdown: [
+                    {
+                        lineNum: 1,
+                        code: "type=SYSCALL ... exe=\"/usr/bin/python3\" ... uid=0 euid=0 ... item=0 name=\"/etc/hosts\" ... key=\"hosts_mon\"",
+                        syntax: "Auditd SYSCALL record: Syscall 257 (`openat` write mode `0441`), exe (`/usr/bin/python3`), Effective UID (`euid=0` = root), target file (`/etc/hosts`).",
+                        context: "Python script `py_updater` executing out of `/tmp/.meta` modifying protected system configuration file `/etc/hosts` to hijack DNS routing.",
+                        takeaway: "MITRE ATT&CK T1565.001 (Stored Data Manipulation): Unauthorized Changes to critical operating system configuration files."
+                    }
+                ],
+                correctAnswer: "Unauthorized Changes",
+                distractors: ["Registry Changes or Anomalies", "File System Changes or Anomalies", "Anomalous Access Activity"],
+                explanation: "<strong>Unauthorized Changes:</strong> Linux Auditd logs capturing unauthorized modifications to `/etc/hosts` represent Unauthorized Changes to core system files."
+            },
+            {
+                id: 14,
+                ticket: "INC-1481",
+                title: "Domain Controller Security Log",
+                category: "Identity",
+                logType: "Windows Security Event Log / Event Audit",
+                description: "Security auditing logged an event on the Primary Domain Controller (`DC01`). Read the XML fields carefully to evaluate the account context and assigned security privileges.",
+                hint: "Inspect the XML EventData fields: Note the `EventID`, `SubjectUserName`, and the specific privileges assigned under `PrivilegeList`.",
+                log: `<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+  <System>
+    <Provider Name="Microsoft-Windows-Security-Auditing"/>
+    <EventID>4672</EventID>
+    <TimeCreated SystemTime="2026-10-22T14:50:10.120491Z"/>
+    <Computer>DC01.corp.internal</Computer>
+  </System>
+  <EventData>
+    <Data Name="SubjectUserSid">S-1-5-21-1029102-4102910-881204-501</Data>
+    <Data Name="SubjectUserName">Guest</Data>
+    <Data Name="SubjectDomainName">CORP</Data>
+    <Data Name="PrivilegeList">
+	SeSecurityPrivilege
+	SeTakeOwnershipPrivilege
+	SeLoadDriverPrivilege
+	SeBackupPrivilege
+	SeRestorePrivilege
+	SeDebugPrivilege
+	SeImpersonatePrivilege</Data>
+  </EventData>
+</Event>`,
+                breakdown: [
+                    {
+                        lineNum: 1,
+                        code: "<EventID>4672</EventID> ... <Data Name=\"SubjectUserName\">Guest</Data> ... SeDebugPrivilege / SeImpersonatePrivilege",
+                        syntax: "Windows Event ID 4672 (Special Privileges Assigned to New Logon). SubjectUserName: Guest.",
+                        context: "Disabled/Restricted local `Guest` account assigned high-risk administrative tokens (`SeDebugPrivilege`, `SeImpersonatePrivilege`, `SeTakeOwnershipPrivilege`).",
+                        takeaway: "MITRE ATT&CK T1068 (Exploitation for Privilege Escalation) & T1134: Unauthorized Privileges assigned to a low-privilege user account."
+                    }
+                ],
+                correctAnswer: "Unauthorized Privileges",
+                distractors: ["Introduction of New Accounts", "Unauthorized Changes", "Social Engineering / Obfuscated Links"],
+                explanation: "<strong>Unauthorized Privileges:</strong> Windows Event ID 4672 assigning sensitive system privileges (`SeDebugPrivilege`, `SeImpersonatePrivilege`) to a `Guest` account indicates Unauthorized Privileges."
+            },
+            {
+                id: 15,
+                ticket: "INC-1502",
+                title: "Suricata EVE JSON Egress Alert",
+                category: "Network",
+                logType: "Suricata NIDS EVE.json (JSON Output)",
+                description: "NIDS alert engine logged an HTTP request payload containing large Base64 strings sent to an unverified external destination.",
+                hint: "Inspect the `alert.signature`, `http.http_method` (POST), `http.url`, and `payload_printable` content.",
+                log: `{
+  "timestamp": "2026-10-22T19:15:30.412091+0000",
+  "flow_id": 1920192019201,
+  "event_type": "alert",
+  "src_ip": "10.0.1.45",
+  "src_port": 51204,
+  "dest_ip": "198.51.100.1",
+  "dest_port": 80,
+  "proto": "TCP",
+  "alert": {
+    "action": "allowed",
+    "gid": 1,
+    "signature_id": 2029102,
+    "signature": "ET POLICY Outbound Sensitive Data Archive via Base64 POST",
+    "category": "Potential Corporate Privacy Violation",
+    "severity": 1
+  },
+  "http": {
+    "hostname": "198.51.100.1",
+    "url": "/upload/stage.php",
+    "http_method": "POST",
+    "length": 2147483648
+  }
+}`,
+                breakdown: [
+                    {
+                        lineNum: 1,
+                        code: "\"src_ip\": \"10.0.1.45\" ... \"dest_ip\": \"198.51.100.1\" ... \"signature\": \"ET POLICY Outbound Sensitive Data Archive...\" ... \"length\": 2147483648",
+                        syntax: "Suricata EVE JSON fields: Event Type (alert), Source IP, Dest IP (198.51.100.1), HTTP Method (POST), Length (2,147,483,648 bytes = 2 GB).",
+                        context: "2 Gigabyte payload POSTed over unencrypted HTTP to external script `/upload/stage.php` on untrusted IP 198.51.100.1.",
+                        takeaway: "MITRE ATT&CK T1048.003 (Exfiltration Over Unencrypted Non-Application Protocol): Active Data Exfiltration event."
+                    }
+                ],
+                correctAnswer: "Data Exfiltration",
+                distractors: ["Bandwidth Consumption", "Traffic Spikes", "Irregular Peer-to-Peer Communication"],
+                explanation: "<strong>Data Exfiltration:</strong> Suricata EVE alerts logging a 2 GB HTTP POST request (`length: 2147483648`) to an external IP (`198.51.100.1`) indicate active Data Exfiltration."
+            },
+            {
+                id: 16,
+                ticket: "INC-1612",
+                title: "Sysmon Process Spawn Hierarchy Audit",
+                category: "Endpoint",
+                logType: "Microsoft-Windows-Sysmon/Operational Event ID 1 (Process Creation)",
+                description: "Sysmon captured process creation telemetry logging an irregular process tree structure involving critical core Windows processes.",
+                hint: "Examine the `Image` process path (`svchost.exe`), `ParentImage` (`powershell.exe`), and parent process command line.",
+                log: `<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+  <System>
+    <Provider Name="Microsoft-Windows-Sysmon"/>
+    <EventID>1</EventID>
+    <TimeCreated SystemTime="2026-10-22T14:22:33.812091Z"/>
+    <Computer>WKST-DEV01.corp.internal</Computer>
+  </System>
+  <EventData>
+    <Data Name="ProcessId">9102</Data>
+    <Data Name="Image">C:\\Windows\\System32\\svchost.exe</Data>
+    <Data Name="CommandLine">C:\\Windows\\System32\\svchost.exe -k netsvcs -p</Data>
+    <Data Name="User">NT AUTHORITY\\SYSTEM</Data>
+    <Data Name="ParentProcessId">4102</Data>
+    <Data Name="ParentImage">C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe</Data>
+    <Data Name="ParentCommandLine">powershell.exe -ExecutionPolicy Bypass -NoProfile -Enc JABzAD0ATgBlAHcALQBPAGIAagBlAGMAdA...</Data>
+  </EventData>
+</Event>`,
+                breakdown: [
+                    {
+                        lineNum: 1,
+                        code: "<Data Name=\"Image\">C:\\Windows\\System32\\svchost.exe</Data> ... <Data Name=\"ParentImage\">...\\powershell.exe</Data>",
+                        syntax: "Process Image (`svchost.exe`), ParentImage (`powershell.exe` executing encoded Base64 command).",
+                        context: "Legitimate `svchost.exe` MUST ALWAYS be spawned by `services.exe`. PowerShell spawning `svchost.exe` indicates process masquerading or injection.",
+                        takeaway: "MITRE ATT&CK T1055 (Process Injection) / T1036 (Masquerading): Abnormal OS Process Behavior breaking baseline execution trees."
+                    }
+                ],
+                correctAnswer: "Abnormal OS Process Behavior",
+                distractors: ["Unauthorized Scheduled Tasks", "Processor Consumption", "Unauthorized Software"],
+                explanation: "<strong>Abnormal OS Process Behavior:</strong> In Windows, `svchost.exe` must be spawned by `services.exe`. `powershell.exe` spawning `svchost.exe` indicates Process Injection or Masquerading."
+            },
+            {
+                id: 17,
+                ticket: "INC-1702",
+                title: "Sysmon Event ID 11 Mass File Audit",
+                category: "Endpoint",
+                logType: "Microsoft-Windows-Sysmon/Operational Event ID 11 (File Create)",
+                description: "Sysmon file creation auditing captured rapid sequential file modification operations altering user document file extensions.",
+                hint: "Review the Event ID (11), `TargetFilename` extension (`.locked`), creating process (`cryptor.exe`), and timestamp density.",
+                log: `<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+  <System>
+    <Provider Name="Microsoft-Windows-Sysmon"/>
+    <EventID>11</EventID>
+    <TimeCreated SystemTime="2026-10-22T14:35:20.102910Z"/>
+    <Computer>FS01.corp.internal</Computer>
+  </System>
+  <EventData>
+    <Data Name="RuleName">Ransomware Extension Monitor</Data>
+    <Data Name="UtcTime">2026-10-22 14:35:20.100</Data>
+    <Data Name="ProcessId">8812</Data>
+    <Data Name="Image">C:\\Users\\Public\\cryptor.exe</Data>
+    <Data Name="TargetFilename">D:\\Shares\\Finance\\Q3_Report.pdf.locked</Data>
+    <Data Name="User">CORP\\svc-backup</Data>
+  </EventData>
+</Event>`,
+                breakdown: [
+                    {
+                        lineNum: 1,
+                        code: "<EventID>11</EventID> ... <Data Name=\"Image\">C:\\Users\\Public\\cryptor.exe</Data> ... <Data Name=\"TargetFilename\">D:\\Shares\\Finance\\Q3_Report.pdf.locked</Data>",
+                        syntax: "Sysmon Event ID 11 (FileCreated). Process (`cryptor.exe`), TargetFilename (`.pdf.locked`).",
+                        context: "High-volume file creation event appending `.locked` extension across network share drives.",
+                        takeaway: "MITRE ATT&CK T1486 (Data Encrypted for Impact): High-frequency File System Changes / Anomalies characteristic of active ransomware."
+                    }
+                ],
+                correctAnswer: "File System Changes or Anomalies",
+                distractors: ["Drive Capacity Consumption", "Unauthorized Changes", "Malicious Processes"],
+                explanation: "<strong>File System Changes or Anomalies:</strong> Mass creation of encrypted file variants (`.pdf.locked`) by binaries in public directories indicates File System Anomalies."
+            },
+            {
+                id: 18,
+                ticket: "INC-1891",
+                title: "Sysmon Event ID 13 Registry Persistence",
+                category: "Endpoint",
+                logType: "Microsoft-Windows-Sysmon/Operational Event ID 13 (RegistryValue Set)",
+                description: "Registry auditing event logs recorded an unauthorized modification to auto-start registry run keys.",
+                hint: "Examine the Event ID (13), `TargetObject` path (`CurrentVersion\\Run`), `Details` payload, and creating process.",
+                log: `<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+  <System>
+    <Provider Name="Microsoft-Windows-Sysmon"/>
+    <EventID>13</EventID>
+    <TimeCreated SystemTime="2026-10-22T11:15:33.412091Z"/>
+    <Computer>WKST-EXEC01.corp.internal</Computer>
+  </System>
+  <EventData>
+    <Data Name="EventType">SetValue</Data>
+    <Data Name="UtcTime">2026-10-22 11:15:33.410</Data>
+    <Data Name="ProcessId">4102</Data>
+    <Data Name="Image">C:\\Users\\exec\\AppData\\Local\\Temp\\updater.exe</Data>
+    <Data Name="TargetObject">HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run\\PersistenceAgent</Data>
+    <Data Name="Details">C:\\Users\\exec\\AppData\\Local\\Temp\\updater.exe --silent</Data>
+    <Data Name="User">CORP\\exec</Data>
+  </EventData>
+</Event>`,
+                breakdown: [
+                    {
+                        lineNum: 1,
+                        code: "<EventID>13</EventID> ... <Data Name=\"TargetObject\">HKLM\\...\\CurrentVersion\\Run\\PersistenceAgent</Data> ... <Data Name=\"Details\">...\\updater.exe --silent</Data>",
+                        syntax: "Sysmon Event ID 13 (RegistryValue Set). TargetObject (`CurrentVersion\\Run`), Details (`updater.exe --silent`).",
+                        context: "Process `updater.exe` writing a new auto-start key in the `Run` hive to execute automatically upon system boot.",
+                        takeaway: "MITRE ATT&CK T1547.001 (Boot or Logon Autostart Execution - Registry Run Keys): Registry Changes or Anomalies establishing boot persistence."
+                    }
+                ],
+                correctAnswer: "Registry Changes or Anomalies",
+                distractors: ["Unauthorized Scheduled Tasks", "Unauthorized Changes", "Abnormal OS Process Behavior"],
+                explanation: "<strong>Registry Changes or Anomalies:</strong> Sysmon Event ID 13 logging writes to `HKLM\\...\\CurrentVersion\\Run` represents Registry Changes for boot persistence."
+            },
+            {
+                id: 19,
+                ticket: "INC-1982",
+                title: "Windows Security Event ID 4698 Task Audit",
+                category: "Endpoint",
+                logType: "Windows Security Event Log / Event ID 4698 (A scheduled task was created)",
+                description: "Security event logs recorded the creation of a new scheduled task executing binaries out of public profile paths.",
+                hint: "Review the Event ID (4698), Task Name, Action Command (`C:\\Users\\Public\\beacon.exe`), and SubjectUserName.",
+                log: `<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+  <System>
+    <Provider Name="Microsoft-Windows-Security-Auditing"/>
+    <EventID>4698</EventID>
+    <TimeCreated SystemTime="2026-10-22T12:00:30.120491Z"/>
+    <Computer>WKST-FIN01.corp.internal</Computer>
+  </System>
+  <EventData>
+    <Data Name="SubjectUserName">SYSTEM</Data>
+    <Data Name="TaskName">\\Microsoft\\Windows\\Maintenance\\WinUpdateTask</Data>
+    <Data Name="TaskContent">&lt;Task xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task"&gt;&lt;Triggers&gt;&lt;CalendarTrigger&gt;&lt;Repetition&gt;&lt;Interval&gt;PT5M&lt;/Interval&gt;&lt;/Repetition&gt;&lt;/CalendarTrigger&gt;&lt;/Triggers&gt;&lt;Actions&gt;&lt;Exec&gt;&lt;Command&gt;C:\\Users\\Public\\beacon.exe&lt;/Command&gt;&lt;/Exec&gt;&lt;/Actions&gt;&lt;/Task&gt;</Data>
+  </EventData>
+</Event>`,
+                breakdown: [
+                    {
+                        lineNum: 1,
+                        code: "<EventID>4698</EventID> ... <Data Name=\"TaskName\">\\Microsoft\\Windows\\Maintenance\\WinUpdateTask</Data> ... <Command>C:\\Users\\Public\\beacon.exe</Command>",
+                        syntax: "Event ID 4698 (Scheduled Task Created). Task XML: Trigger (`Interval PT5M` = 5 mins), Command (`C:\\Users\\Public\\beacon.exe`).",
+                        context: "Masqueraded task `WinUpdateTask` created to execute `beacon.exe` every 5 minutes from `C:\\Users\\Public`.",
+                        takeaway: "MITRE ATT&CK T1053.005 (Scheduled Task): Execution persistence via Unauthorized Scheduled Tasks."
+                    }
+                ],
+                correctAnswer: "Unauthorized Scheduled Tasks",
+                distractors: ["Registry Changes or Anomalies", "Beaconing", "Introduction of New Accounts"],
+                explanation: "<strong>Unauthorized Scheduled Tasks:</strong> Windows Security Event ID 4698 logging new task creation (`WinUpdateTask`) launching binaries from `C:\\Users\\Public` represents an Unauthorized Scheduled Task."
+            },
+            {
+                id: 20,
+                ticket: "INC-2091",
+                title: "Azure AD Unified Audit Log (UAL) JSON",
+                category: "Identity",
+                logType: "Azure Active Directory / Office 365 Unified Audit Log (JSON)",
+                description: "Cloud SSO identity audit logs registered user authentications triggering impossible geographic velocity alerts.",
+                hint: "Compare the timestamps, user principal name (`jsmith@corp.com`), client IP addresses, and IP geolocation metadata.",
+                log: `[
+  {
+    "CreationTime": "2026-10-22T10:45:30Z",
+    "Operation": "UserLoggedIn",
+    "UserId": "jsmith@corp.com",
+    "ClientIP": "198.51.100.45",
+    "GeoLocation": "New York, US",
+    "ResultStatus": "Success",
+    "UserAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+  },
+  {
+    "CreationTime": "2026-10-22T10:49:12Z",
+    "Operation": "UserLoggedIn",
+    "UserId": "jsmith@corp.com",
+    "ClientIP": "203.0.113.88",
+    "GeoLocation": "Tokyo, JP",
+    "ResultStatus": "Success",
+    "UserAgent": "Mozilla/5.0 (X11; Linux x86_64)"
+  }
+]`,
+                breakdown: [
+                    {
+                        lineNum: 1,
+                        code: "\"CreationTime\": \"10:45:30Z\" ... \"ClientIP\": \"198.51.100.45\" (New York, US) -> \"CreationTime\": \"10:49:12Z\" ... \"ClientIP\": \"203.0.113.88\" (Tokyo, JP)",
+                        syntax: "Azure AD UAL fields: CreationTime, Operation (UserLoggedIn), UserId (jsmith@corp.com), ClientIP, GeoLocation.",
+                        context: "User account `jsmith@corp.com` successfully authenticated from New York, USA, and 3 minutes 42 seconds later authenticated from Tokyo, Japan.",
+                        takeaway: "MITRE ATT&CK T1078 (Valid Accounts): Impossible Travel velocity indicates credential compromise / Anomalous Access Activity."
+                    }
+                ],
+                correctAnswer: "Anomalous Access Activity",
+                distractors: ["Social Engineering / Obfuscated Links", "Introduction of New Accounts", "Scans/Sweeps"],
+                explanation: "<strong>Anomalous Access Activity:</strong> Azure AD logs showing successful logins for the same user account from New York and Tokyo within 4 minutes ('Impossible Travel') indicate Anomalous Access Activity."
+            },
+            {
+                id: 21,
+                ticket: "INC-2190",
+                title: "Exchange / Email Gateway MIME Telemetry",
+                category: "Identity",
+                logType: "Raw Email MIME Header & Security Gateway Log",
+                description: "Secure Email Gateway intercepted an inbound email with typosquatted header fields and obfuscated encoded payloads.",
+                hint: "Inspect the `From` header domain (`paypaI-security.com`), subject line urgency, and Base64 encoded payload inside the URL parameter.",
+                log: `Received: from mail.attacker-node.ru (198.51.100.99) by mx.corp.internal with SMTP;
+  Thu, 22 Oct 2026 08:45:12 +0000
+From: "Corporate IT Support" <support@paypaI-security.com>
+To: <victim@corp.internal>
+Subject: URGENT: Mandatory Password Reset Required Immediately
+Content-Type: text/html; charset="UTF-8"
+
+<p>Your password expires in 1 hour. Click below to verify:</p>
+<a href="http://login.verify.ru/index.php?cmd=powershell%20-Enc%20SABFAAEAcgBlAG8AdA...">Verify Account Credentials</a>`,
+                breakdown: [
+                    {
+                        lineNum: 1,
+                        code: "From: ... <support@paypaI-security.com> ... Subject: URGENT: Mandatory Password Reset ... href=\"http://login.verify.ru/...powershell -Enc...",
+                        syntax: "MIME Headers: Sender domain (`paypaI-security.com` with capital 'I'), Urgent Subject, Obfuscated link with Base64 PowerShell execution parameters.",
+                        context: "Homograph attack domain name combined with psychological urgency and Base64 encoded PowerShell payload string.",
+                        takeaway: "MITRE ATT&CK T1566.002 (Phishing - Spearphishing Link) & T1027: Social Engineering / Obfuscated Links designed to steal credentials."
+                    }
+                ],
+                correctAnswer: "Social Engineering / Obfuscated Links",
+                distractors: ["Anomalous Access Activity", "Unauthorized Privileges", "Data Exfiltration"],
+                explanation: "<strong>Social Engineering / Obfuscated Links:</strong> Inbound emails featuring homograph domain names (`paypaI-security.com`), urgency coercion, and Base64 encoded PowerShell links represent Social Engineering."
+            }
+        ];
+
+        // Global State
+        let currentScenarioIdx = 0;
+        let userAnswers = {}; // { scenarioId: { selectedText: string, isCorrect: boolean } }
+        let shuffledOptions = {}; // { scenarioId: ArrayOf4OptionStrings }
+        let currentFilter = 'all';
+        let searchQuery = '';
+
+        // Initialize App
+        window.addEventListener('DOMContentLoaded', () => {
+            initializeShuffledOptions();
+            renderSidebar();
+            loadScenario(0);
+            updateStats();
+        });
+
+        // Pre-shuffle options using Fisher-Yates so option position varies dynamically
+        function initializeShuffledOptions() {
+            scenarios.forEach(s => {
+                const allOpts = [s.correctAnswer, ...s.distractors];
+                for (let i = allOpts.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [allOpts[i], allOpts[j]] = [allOpts[j], allOpts[i]];
+                }
+                shuffledOptions[s.id] = allOpts;
+            });
+        }
+
+        // Render Sidebar Items
+        function renderSidebar() {
+            const nav = document.getElementById('scenario-nav');
+            nav.innerHTML = '';
+
+            scenarios.forEach((s, idx) => {
+                const matchesCategory = (currentFilter === 'all' || s.category === currentFilter);
+                const matchesSearch = s.ticket.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                     s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                     s.logType.toLowerCase().includes(searchQuery.toLowerCase());
+
+                if (!matchesCategory || !matchesSearch) return;
+
+                const isSelected = idx === currentScenarioIdx;
+                const ans = userAnswers[s.id];
+
+                let statusIcon = '<i class="fa-regular fa-circle text-slate-600"></i>';
+                if (ans) {
+                    statusIcon = ans.isCorrect 
+                        ? '<i class="fa-solid fa-circle-check text-emerald-400"></i>' 
+                        : '<i class="fa-solid fa-circle-xmark text-rose-400"></i>';
+                }
+
+                const item = document.createElement('div');
+                item.className = `p-2 rounded cursor-pointer transition flex items-center justify-between text-xs border ${
+                    isSelected 
+                        ? 'bg-sky-600/20 border-sky-500/50 text-white font-semibold' 
+                        : 'bg-slate-950/60 border-slate-800/80 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                }`;
+                item.onclick = () => loadScenario(idx);
+
+                item.innerHTML = `
+                    <div class="flex items-center space-x-2 truncate">
+                        ${statusIcon}
+                        <span class="font-mono text-[11px] text-sky-400">${s.ticket}</span>
+                        <span class="truncate">${s.title}</span>
+                    </div>
+                `;
+                nav.appendChild(item);
+            });
+        }
+
+        // Load Active Scenario into Central Dashboard
+        function loadScenario(idx) {
+            currentScenarioIdx = idx;
+            const s = scenarios[idx];
+
+            document.getElementById('ticket-badge').innerText = s.ticket;
+            document.getElementById('scenario-title').innerText = s.title;
+            document.getElementById('scenario-description').innerText = s.description;
+            document.getElementById('log-type-label').innerText = `${s.logType}`;
+            document.getElementById('log-content').innerText = s.log;
+
+            // Load Inspector / Breakdown Content
+            document.getElementById('hint-text').innerText = s.hint;
+            renderLineBreakdown(s);
+
+            // Hide breakdown by default when navigating to new question
+            document.getElementById('breakdown-wrapper').classList.add('hidden');
+            document.getElementById('hint-placeholder').classList.remove('hidden');
+            document.getElementById('toggle-hint-btn').innerHTML = '<i class="fa-solid fa-lightbulb"></i> Show Analyst Hint & Line Breakdown';
+
+            // Prev / Next button state
+            document.getElementById('btn-prev').disabled = idx === 0;
+            document.getElementById('btn-next').disabled = idx === scenarios.length - 1;
+
+            // Render Answer Options & Feedback
+            renderOptions(s);
+            renderFeedback(s);
+            renderSidebar();
+        }
+
+        // Render Options Grid
+        function renderOptions(scenario) {
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            const ans = userAnswers[scenario.id];
+            const opts = shuffledOptions[scenario.id];
+            const letters = ['A', 'B', 'C', 'D'];
+
+            opts.forEach((optText, optIdx) => {
+                const btn = document.createElement('button');
+                btn.className = `w-full text-left p-2.5 rounded text-xs font-medium border transition flex items-center justify-between `;
+
+                if (!ans) {
+                    // Not answered state
+                    btn.className += `bg-slate-950 border-slate-800 text-slate-300 hover:bg-slate-800 hover:border-slate-700`;
+                    btn.onclick = () => selectOption(scenario.id, optText);
+
+                    const isTempSelected = (userAnswers[`temp_${scenario.id}`] === optText);
+                    if (isTempSelected) {
+                        btn.className = btn.className.replace('bg-slate-950', 'bg-sky-600/20').replace('border-slate-800', 'border-sky-500 text-sky-200 font-bold');
+                    }
+
+                    btn.innerHTML = `<div class="flex items-center space-x-2">
+                        <span class="w-5 h-5 rounded bg-slate-800 border border-slate-700 flex items-center justify-center font-mono text-[10px] text-slate-400">${letters[optIdx]}</span>
+                        <span>${optText}</span>
+                    </div>`;
+                } else {
+                    // Answered state
+                    btn.disabled = true;
+                    if (optText === scenario.correctAnswer) {
+                        btn.className += `bg-emerald-500/20 border-emerald-500 text-emerald-300 font-bold`;
+                        btn.innerHTML = `<div class="flex items-center space-x-2">
+                            <span class="w-5 h-5 rounded bg-emerald-500/30 border border-emerald-500 flex items-center justify-center font-mono text-[10px] text-emerald-300">${letters[optIdx]}</span>
+                            <span>${optText}</span>
+                        </div> <i class="fa-solid fa-check text-emerald-400"></i>`;
+                    } else if (ans.selectedText === optText && !ans.isCorrect) {
+                        btn.className += `bg-rose-500/20 border-rose-500 text-rose-300 font-bold`;
+                        btn.innerHTML = `<div class="flex items-center space-x-2">
+                            <span class="w-5 h-5 rounded bg-rose-500/30 border border-rose-500 flex items-center justify-center font-mono text-[10px] text-rose-300">${letters[optIdx]}</span>
+                            <span>${optText}</span>
+                        </div> <i class="fa-solid fa-xmark text-rose-400"></i>`;
+                    } else {
+                        btn.className += `bg-slate-950/40 border-slate-800/50 text-slate-600 opacity-50`;
+                        btn.innerHTML = `<div class="flex items-center space-x-2">
+                            <span class="w-5 h-5 rounded bg-slate-900 border border-slate-800 flex items-center justify-center font-mono text-[10px] text-slate-600">${letters[optIdx]}</span>
+                            <span>${optText}</span>
+                        </div>`;
+                    }
+                }
+
+                container.appendChild(btn);
+            });
+
+            // Update Submit Button State
+            const submitBtn = document.getElementById('submit-btn');
+            if (ans) {
+                submitBtn.disabled = true;
+                submitBtn.innerText = 'Assessment Complete';
+            } else {
+                submitBtn.disabled = userAnswers[`temp_${scenario.id}`] === undefined;
+                submitBtn.innerText = 'Submit Threat Assessment';
+            }
+        }
+
+        // Temporary Option Selection
+        function selectOption(scenarioId, optText) {
+            userAnswers[`temp_${scenarioId}`] = optText;
+            renderOptions(scenarios[currentScenarioIdx]);
+        }
+
+        // Submit Answer
+        function submitAnswer() {
+            const s = scenarios[currentScenarioIdx];
+            const selectedText = userAnswers[`temp_${s.id}`];
+
+            if (!selectedText) return;
+
+            const isCorrect = (selectedText === s.correctAnswer);
+            userAnswers[s.id] = {
+                selectedText: selectedText,
+                isCorrect: isCorrect
+            };
+
+            delete userAnswers[`temp_${s.id}`];
+
+            renderOptions(s);
+            renderFeedback(s);
+            updateStats();
+            renderSidebar();
+        }
+
+        // Render Feedback Card
+        function renderFeedback(scenario) {
+            const card = document.getElementById('feedback-card');
+            const ans = userAnswers[scenario.id];
+
+            if (!ans) {
+                card.classList.add('hidden');
+                return;
+            }
+
+            card.classList.remove('hidden');
+            const icon = document.getElementById('feedback-icon');
+            const status = document.getElementById('feedback-status');
+            const text = document.getElementById('explanation-text');
+
+            if (ans.isCorrect) {
+                card.className = "rounded border p-3 text-xs bg-emerald-500/10 border-emerald-500/30";
+                icon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400"></i>';
+                status.className = "font-bold text-emerald-400";
+                status.innerText = "Correct Threat Assessment!";
+            } else {
+                card.className = "rounded border p-3 text-xs bg-rose-500/10 border-rose-500/30";
+                icon.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-rose-400"></i>';
+                status.className = "font-bold text-rose-400";
+                status.innerText = "Incorrect Assessment";
+            }
+
+            text.innerHTML = scenario.explanation;
+        }
+
+        // Render Right-Hand Detailed Line Breakdown Cards
+        function renderLineBreakdown(scenario) {
+            const container = document.getElementById('line-breakdown-list');
+            container.innerHTML = '';
+
+            scenario.breakdown.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "bg-slate-950 border border-slate-800 rounded p-3 space-y-2 text-xs shadow-md";
+                card.innerHTML = `
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                        <span class="bg-sky-500/20 text-sky-400 text-[10px] font-mono font-bold px-2 py-0.5 rounded border border-sky-500/30">
+                            Telemetry Section #${item.lineNum}
+                        </span>
+                        <span class="text-[10px] font-mono text-slate-500">Forensic Dissection</span>
+                    </div>
+
+                    <div class="bg-terminal-bg p-2 rounded border border-slate-900 font-mono text-[11px] text-terminal-code overflow-x-auto custom-scrollbar">
+                        ${escapeHtml(item.code)}
+                    </div>
+
+                    <div class="space-y-1.5 text-[11px] pt-1">
+                        <div>
+                            <span class="font-bold text-sky-400 uppercase tracking-wider text-[10px] block">Technical Syntax & Vendor Fields:</span>
+                            <p class="text-slate-300 leading-relaxed">${item.syntax}</p>
+                        </div>
+
+                        <div>
+                            <span class="font-bold text-amber-400 uppercase tracking-wider text-[10px] block">Security & Forensic Context:</span>
+                            <p class="text-slate-300 leading-relaxed">${item.context}</p>
+                        </div>
+
+                        <div class="bg-slate-900/90 p-2 rounded border border-slate-800/80">
+                            <span class="font-bold text-rose-400 uppercase tracking-wider text-[10px] block mb-0.5">Key Red Flag Takeaway:</span>
+                            <p class="text-slate-200 leading-relaxed">${item.takeaway}</p>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Escape HTML tags to safely render in breakdown code view
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        // Toggle Right-Hand Line Breakdown Inspector
+        function toggleHintBreakdown() {
+            const wrapper = document.getElementById('breakdown-wrapper');
+            const placeholder = document.getElementById('hint-placeholder');
+            const btn = document.getElementById('toggle-hint-btn');
+
+            if (wrapper.classList.contains('hidden')) {
+                wrapper.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                btn.innerHTML = '<i class="fa-solid fa-eye-slash"></i> Hide Line Breakdown';
+            } else {
+                wrapper.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+                btn.innerHTML = '<i class="fa-solid fa-lightbulb"></i> Show Analyst Hint & Line Breakdown';
+            }
+        }
+
+        // Update Top Stats Bar
+        function updateStats() {
+            const completedCount = Object.keys(userAnswers).filter(k => !k.startsWith('temp_')).length;
+            const correctCount = Object.values(userAnswers).filter(a => a && a.isCorrect).length;
+            const accuracy = completedCount > 0 ? Math.round((correctCount / completedCount) * 100) : 0;
+
+            document.getElementById('stat-progress').innerText = `${completedCount} / 21`;
+            document.getElementById('stat-score').innerText = `${correctCount} / ${completedCount} (${accuracy}%)`;
+        }
+
+        // Navigation Prev/Next
+        function navigateScenario(delta) {
+            const newIdx = currentScenarioIdx + delta;
+            if (newIdx >= 0 && newIdx < scenarios.length) {
+                loadScenario(newIdx);
+            }
+        }
+
+        // Category Filter
+        function filterCategory(cat) {
+            currentFilter = cat;
+            document.querySelectorAll('.cat-filter-btn').forEach(btn => {
+                if (btn.dataset.cat === cat) {
+                    btn.className = "cat-filter-btn flex-1 py-1 rounded bg-sky-600 text-white font-medium text-center";
+                } else {
+                    btn.className = "cat-filter-btn flex-1 py-1 rounded bg-slate-800 text-slate-400 text-center hover:bg-slate-700";
+                }
+            });
+            renderSidebar();
+        }
+
+        // Search Input Listener
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            renderSidebar();
+        });
+
+        // Copy Log Text
+        function copyLogToClipboard() {
+            const text = document.getElementById('log-content').innerText;
+            navigator.clipboard.writeText(text);
+            alert("Raw vendor log telemetry copied to clipboard.");
+        }
+
+        // Reset Lab
+        function resetLab() {
+            if (confirm("Reset all lab answers and restart score tracking?")) {
+                userAnswers = {};
+                initializeShuffledOptions();
+                updateStats();
+                loadScenario(0);
+            }
+        }
+    </script>
+</body>
+</html>
