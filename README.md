@@ -56,13 +56,15 @@ name but are genuinely different exercises — both were kept.)
 
 ## Pause / resume
 
-Every simulation page has a **"← Back to Dashboard"** bar pinned to the top, so a student can
-leave at any point and return to the dashboard without losing their place in the overall set.
-The dashboard tracks, per device, which simulations are **Not Started**, **In Progress**, or
-**Completed** (marked automatically when a simulation's built-in scoring/submit action runs),
-shown as a badge on each tile and a progress bar at the top of the page. Progress is stored
-in the browser's local storage — it's per-device/per-browser, not a login-based account
-system, and can be cleared any time with the "Reset progress" button.
+Every simulation page has a **"← Back to Dashboard"** bar fixed across the top of the window
+(added to all 22 on 31 October 2026), so a student can leave at any point and return to the
+dashboard. The dashboard can show, per device, which simulations are **Not Started**,
+**In Progress**, or **Completed**, as a badge on each tile and a progress bar at the top of the
+page — but only for a simulation that reports it (`SimHub.init` and `SimHub.markComplete` in
+`sim-common.js`). None of the 22 do yet: each shows the bar only (`SimHub.bar`), so no tile is
+left saying "In progress" for a simulation the student finished. Progress is stored in the
+browser's local storage — it's per-device/per-browser, not a login-based account system, and
+can be cleared any time with the "Reset progress" button.
 
 Note: progress tracking remembers *which* simulations have been finished, not mid-simulation
 state — each simulation is its own independent exercise, so reopening one after leaving it
